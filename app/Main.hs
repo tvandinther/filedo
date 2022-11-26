@@ -1,43 +1,79 @@
+-- {-# LANGUAGE ScopedTypeVariables #-}
+
 module Main (main) where
 
-import Options.Applicative
 import Lib
+import Data.Semigroup ((<>))
+import Options.Applicative
 
-main :: IO ()
-main = someFunc
+data Opts = Opts
+    { verbose :: Bool
+    , optCommand :: Command
+    }
+
+data MergeDataOptions = MergeDataOptions
+    { dataFiles :: [FilePath]
+    , outputFile :: Maybe FilePath }
+    deriving (Show)
+
+data CompileOptions = CompileOptions
+    { outputFile' :: Maybe FilePath }
+    deriving (Show)
 
 data Command
     = MergeData MergeDataOptions
     | Compile CompileOptions
 
--- data Options = Options
---     { mergeDataCommand :: Command
---     , compileCommand :: Command }
+main :: IO ()
+main = do
+    opts <- execParser optsParser
+    case optCommand opts of
+        MergeData x -> print x
+        Compile x -> print x
+    putStrLn ("global flag: " ++ show (verbose opts))
 
+optsParser :: ParserInfo Opts
+optsParser =
+    info
+        (helper <*> versionParser <*> programOptions)
+        (fullDesc <> progDesc "optparse subcommands example" <>
+            header
+                "optparse-sub-example - a small example program for optparse-applicative with subcommands")
 
+versionParser :: Parser (a -> a)
+versionParser = infoOption "0.0" (long "version" <> help "Show version")
 
-data MergeDataOptions = MergeDataOptions
-    { dataFiles :: [FilePath]
-    , outputFile :: Maybe FilePath }
+verbosityParser :: Parser Bool
+verbosityParser = switch
+    ( long "verbose"
+    <> short 'v'
+    <> help "Enable verbose mode" )
 
-data CompileOptions = CompileOptions
-    { }
+programOptions :: Parser Opts
+programOptions =
+    Opts <$> verbosityParser <*>
+    hsubparser (mergeDataCommand <> compileCommand)
 
-commands :: Parser Command
-commands = hsubparser $ 
-    command "merge-data" mergeDataInfo
-    <> command "compile" compileInfo
+mergeDataCommand :: Mod CommandFields Command
+mergeDataCommand =
+    command
+        "merge-data"
+        (info (MergeData <$> mergeDataOptions) (progDesc "Create a thing"))
 
-mergeDataCommand :: Mod CommandFields MergeDataOptions
-mergeDataCommand = command "merge-data" mergeDataInfo
-
-mergeDataInfo :: ParserInfo MergeDataOptions
-mergeDataInfo = info mergeDataParser (progDesc "Merges Data")
-
-mergeDataParser :: Parser MergeDataOptions
-mergeDataParser = MergeDataOptions
-    <$> many (argument str (metavar "DATAFILES..."))
+-- mergeDataOptions :: Parser MergeDataOptions
+mergeDataOptions :: Parser MergeDataOptions
+mergeDataOptions =
+    MergeDataOptions <$>
+    many (argument str (metavar "DATAFILES..."))
     <*> optional (strOption (long "output" <> short 'o' <> metavar "OUTPUT"))
 
-compileInfo :: ParserInfo CompileOptions
-compileInfo = undefined
+compileCommand :: Mod CommandFields Command
+compileCommand =
+    command
+        "compile"
+        (info (Compile <$> compileOptions) (progDesc "Delete the thing"))
+
+compileOptions :: Parser CompileOptions
+compileOptions =
+    CompileOptions <$>
+    optional (strOption (long "output" <> short 'o' <> metavar "OUTPUT"))
