@@ -39,6 +39,10 @@ library
 executable filedo-exe
   main-is: Main.hs
   other-modules:
+      Commands
+      Commands.Compile
+      Commands.MergeData
+      Options
       Paths_filedo
   hs-source-dirs:
       app
