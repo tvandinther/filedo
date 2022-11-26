@@ -42,6 +42,7 @@ executable filedo-exe
       Commands
       Commands.Compile
       Commands.MergeData
+      Data
       Options
       Paths_filedo
   hs-source-dirs:
