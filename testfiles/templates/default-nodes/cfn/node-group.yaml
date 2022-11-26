@@ -1,0 +1,34 @@
+{{#global.generation.isCallisto}}
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Callisto default node group'
+
+Resources:
+  DefaultNodegroup:
+    Type: AWS::EKS::Nodegroup
+    Properties:
+      ClusterName: {{global.clusterName}}
+      NodeRole: !GetAtt DefaultNodeRole.Arn
+      Subnets:
+        {{global.privateSubnetIds}}
+        - {{ . }}
+        {{/global.privateSubnetIds}}
+
+  DefaultNodeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: {{global.clusterName}}-default-node-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+        - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+{{/global.generation.isCallisto}}

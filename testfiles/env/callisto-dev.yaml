@@ -1,0 +1,10 @@
+---
+global:
+  generation: callisto
+  clusterName: callisto-dev
+  environment: development
+  kubernetesVersion: 1.23
+
+aws:
+  accountID: 693429498512
+  clusterRootRoleName: adfs-ex-central-development-admin

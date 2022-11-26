@@ -1,0 +1,15 @@
+override: true # do not use rules and configuration from parent config files, default false
+rules:
+  cloudformation:
+    priority: 10
+    targets: "**/cfn/*.yaml" # targets all yaml files in cfn directories
+    skip: true
+    command: ["aws", "cloudformation", "deploy", "--template-file", "$path", "--stack-name", "$name", "--capabilities", "CAPABILITY_IAM"]
+
+# options for handling child configs:
+# - for files scoped to the child config's location, use the child config merged with the parent config
+#    - Unless the child config has override: true, in which case the child config is used as is
+#    - Allow override property to be set in any object to define it's merge behaviour
+# - keys are file-namespaced
+
+# override property for merge default or inherit property for override default

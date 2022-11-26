@@ -1,0 +1,36 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: EKS Cluster
+
+Resources:
+  Cluster:
+    Type: AWS::EKS::Cluster
+    Properties:
+      Name: {{global.clusterName}}
+      Version: {{global.kubernetesVersion}}
+      Tags:
+        - Key: Environment
+          Value: {{global.environment}}
+      RoleArn: !GetAtt ClusterRole.Arn
+      ResourcesVpcConfig:
+        SubnetIds:
+          {{global.privateSubnetIds}}
+          - {{ . }}
+          {{/global.privateSubnetIds}}
+
+  ClusterRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: {{global.clusterName}}-eks-role
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - eks.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
+        - arn:aws:iam::aws:policy/AmazonEKSServicePolicy
