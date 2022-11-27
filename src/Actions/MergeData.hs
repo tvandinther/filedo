@@ -13,6 +13,7 @@ import Data.Aeson.KeyMap (unionWith)
 
 import Types (DataFileType(..))
 import Data.ByteString.Lazy (toStrict)
+import Data.List (foldl1')
 
 data MergeDataJob = MergeDataJob
     { dataFiles :: [ByteString]
@@ -32,7 +33,7 @@ encodeAST JSON = toStrict . JSON.encode
 encodeAST YAML = Yaml.encode
 
 mergeASTs :: [Yaml.Value] -> Yaml.Value
-mergeASTs = foldl1 mergeAST
+mergeASTs = foldl1' mergeAST
     where
         mergeAST :: Yaml.Value -> Yaml.Value -> Yaml.Value
         mergeAST (Yaml.Object a) (Yaml.Object b) = Yaml.Object $ unionWith mergeAST a b
