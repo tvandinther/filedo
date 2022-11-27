@@ -4,7 +4,7 @@ module Commands.MergeData (
 ) where
 
 import Options.Applicative
-import Data( DataFileType(..) )
+import Types ( DataFileType(..) )
 import Data.Char (toLower)
 
 data MergeDataOptions = MergeDataOptions
