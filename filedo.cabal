@@ -25,6 +25,7 @@ source-repository head
 
 library
   exposed-modules:
+      Actions.Compile
       Actions.MergeData
       Types
   other-modules:
@@ -47,7 +48,9 @@ executable filedo-exe
       Commands.Compile
       Commands.MergeData
       Options
+      Runners.Compile
       Runners.MergeData
+      Utility
       Paths_filedo
   hs-source-dirs:
       app

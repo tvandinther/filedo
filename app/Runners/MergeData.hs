@@ -1,24 +1,26 @@
+{-# LANGUAGE LambdaCase #-}
 module Runners.MergeData (
-    runMergeData
+    runMergeData,
+    sendMergeJob
 ) where
 
 import qualified Data.ByteString as BS
 import Actions.MergeData
 
 import Commands.MergeData (MergeDataOptions(..))
-import qualified Commands.MergeData as Opts
-import qualified Data.ByteString.Char8 as BS
+import Types (DataFileType)
+import Data.ByteString (ByteString)
+import Utility (processOutput)
+import qualified Control.Arrow
 
 runMergeData :: MergeDataOptions -> IO ()
-runMergeData o = do
-    byteStrings <- mapM BS.readFile (Opts.dataFiles o)
-    let result = mergeData $ MergeDataJob byteStrings (Opts.outputType o)
-    case result of
-        Right res -> print "Success" >> processOutput (outputFile o) res
-        Left MergeDataError{ errorMessage=em } -> print em
+runMergeData (MergeDataOptions dfs o t) = sendMergeJob t dfs >>= \case
+    Left (MergeDataError err) -> print err
+    Right bs -> processOutput o bs
 
-processOutput :: Maybe FilePath -> MergeDataSuccess -> IO ()
-processOutput Nothing result = BS.putStrLn $ mergedData result
-processOutput (Just path) result = do
-    BS.writeFile path (mergedData result)
-    print $ "Output written to: " ++ show path
+sendMergeJob :: DataFileType -> [FilePath] -> IO (Either MergeDataError ByteString)
+sendMergeJob t dfs = do
+    byteStrings <- mapM BS.readFile dfs
+    let result = mergeData $ MergeDataJob byteStrings t
+    return $ Control.Arrow.right mergedData result
+    -- return $ result >>= \b -> mergedData b
