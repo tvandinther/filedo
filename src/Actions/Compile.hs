@@ -4,10 +4,14 @@ module Actions.Compile (
     CompileError(..),
     runCompile
 ) where
+
 import Data.ByteString (ByteString)
 
+import Data.Aeson( FromJSON )
+import qualified Data.Yaml as Yaml
+
 data CompileJob = CompileJob
-    { templateData :: ByteString 
+    { templateData :: Yaml.Value
     , template :: ByteString }
 
 newtype CompileSuccess = CompileSuccess ByteString deriving (Show)

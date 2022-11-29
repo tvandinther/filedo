@@ -10,6 +10,7 @@ import qualified Data.Yaml as Yaml
 
 import qualified Data.Aeson as JSON
 import Data.Aeson.KeyMap (unionWith)
+import Data.Aeson.Types ( Value(..), Object(..) )
 
 import Types (DataFileType(..))
 import Data.ByteString.Lazy (toStrict)
@@ -32,10 +33,9 @@ encodeAST :: DataFileType -> Yaml.Value -> ByteString
 encodeAST JSON = toStrict . JSON.encode
 encodeAST YAML = Yaml.encode
 
-mergeASTs :: [Yaml.Value] -> Yaml.Value
+mergeASTs :: [JSON.Value] -> JSON.Value
 mergeASTs = foldl1' mergeAST
     where
-        mergeAST :: Yaml.Value -> Yaml.Value -> Yaml.Value
-        mergeAST (Yaml.Object a) (Yaml.Object b) = Yaml.Object $ unionWith mergeAST a b
-        mergeAST (Yaml.Array _) (Yaml.Array b) = Yaml.Array b
+        mergeAST :: JSON.Value -> JSON.Value -> JSON.Value
+        mergeAST (JSON.Object a) (JSON.Object b) = JSON.Object $ unionWith mergeAST a b
         mergeAST _ b = b

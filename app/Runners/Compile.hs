@@ -2,7 +2,7 @@ module Runners.Compile (
     runCompile
 ) where
 
-import Commands.Compile (CompileOptions(..), TemplateOptions (..))
+import Commands.Compile (CompileOptions(..))
 import Data.ByteString (ByteString, getContents)
 import qualified Data.ByteString.Char8 as BS
 import Actions.MergeData
@@ -12,8 +12,7 @@ import qualified Control.Arrow
 import Actions.Compile (CompileError)
 
 runCompile :: CompileOptions -> IO ()
-runCompile (CompileOptions dfs (SingleTemplate tf o)) = runCompile' dfs [tf] o
-runCompile (CompileOptions dfs (MultipleTemplates tfs o)) = runCompile' dfs tfs (Just o)
+runCompile (CompileOptions dfs tfs o) = runCompile' dfs tfs o
 
 runCompile' :: [FilePath] -> [FilePath] -> Maybe FilePath -> IO ()
 runCompile' dfs tfs o = do

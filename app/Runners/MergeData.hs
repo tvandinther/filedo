@@ -23,4 +23,3 @@ sendMergeJob t dfs = do
     byteStrings <- mapM BS.readFile dfs
     let result = mergeData $ MergeDataJob byteStrings t
     return $ Control.Arrow.right mergedData result
-    -- return $ result >>= \b -> mergedData b
