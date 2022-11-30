@@ -1,4 +1,4 @@
-
+# targets: "**" # targets all files by default
 rules:
   init: # rule name
     priority: 9999999 # priority of the rule, rules with higher values are executed before rules with lower values, default 0
@@ -13,23 +13,26 @@ rules:
     environment: # override environment variables for the execution of the rule
       AWS_PROFILE: "{{.global.awsProfile}}"
   
-  cloudformation:
-    priority: 10
-    targets: "**/cfn/*.yaml" # targets all yaml files in cfn directories
-    command: ["aws", "cloudformation", "deploy", "--template-file", "$path", "--stack-name", "$name", "--capabilities", "CAPABILITY_IAM"]
+  deploy:
+    targets: "*/"
+    rules:
+      cloudformation:
+        priority: 10
+        targets: "**/cfn/*.yaml" # targets all yaml files in cfn directories
+        command: ["aws", "cloudformation", "deploy", "--template-file", "$path", "--stack-name", "$name", "--capabilities", "CAPABILITY_IAM"]
 
-  kubernetes:
-    targets: # targetes all yaml files
-      - "**/*.yaml"
-    exclude: # exclude all yaml files in cfn directories
-      - "**/cfn/*.yaml"
-    useStdIn: true # pipes the file contents into the command via stdin
-    command:
-      - kubectl
-      - apply
-      - -f
-      - "-"
-    pre: ["aws", "eks", "update-kubeconfig", "--name", "{{.global.clusterName }}"]
+      kubernetes:
+        targets: # targetes all yaml files
+          - "**/*.yaml"
+        exclude: # exclude all yaml files in cfn directories
+          - "**/cfn/*.yaml"
+        useStdIn: true # pipes the file contents into the command via stdin
+        command:
+          - kubectl
+          - apply
+          - -f
+          - "-"
+        pre: ["aws", "eks", "update-kubeconfig", "--name", "{{.global.clusterName }}"]
 
 # set environment variables globally
 environment:

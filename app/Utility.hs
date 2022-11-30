@@ -2,11 +2,11 @@ module Utility (
     processOutput
 ) where
 
-import Data.ByteString (ByteString)
-import qualified Data.ByteString.Char8 as BS
+import Data.Text
+import qualified Data.Text.IO as TIO
 
-processOutput :: Maybe FilePath -> ByteString -> IO ()
-processOutput Nothing bs = BS.putStrLn bs
-processOutput (Just path) bs = do
-    BS.writeFile path bs
+processOutput :: Maybe FilePath -> Text -> IO ()
+processOutput Nothing txt = TIO.putStrLn txt
+processOutput (Just path) txt = do
+    TIO.writeFile path txt
     print $ "Output written to: " ++ show path

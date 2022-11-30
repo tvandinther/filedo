@@ -25,7 +25,10 @@ dependencies:
 - yaml
 - aeson
 - bytestring
+- text
 - stache
+- megaparsec
+- filepath >= 1.4.2.2 && < 1.4.100
 
 ghc-options:
 - -Wall

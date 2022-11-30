@@ -28,6 +28,7 @@ library
       Actions.Compile
       Actions.MergeData
       Types
+      Types.LazyFile
   other-modules:
       Paths_filedo
   hs-source-dirs:
@@ -37,8 +38,11 @@ library
       aeson
     , base >=4.7 && <5
     , bytestring
+    , filepath >=1.4.2.2 && <1.4.100
+    , megaparsec
     , optparse-applicative
     , stache
+    , text
     , yaml
   default-language: Haskell2010
 
@@ -61,8 +65,11 @@ executable filedo-exe
     , base >=4.7 && <5
     , bytestring
     , filedo
+    , filepath >=1.4.2.2 && <1.4.100
+    , megaparsec
     , optparse-applicative
     , stache
+    , text
     , yaml
   default-language: Haskell2010
 
@@ -79,7 +86,10 @@ test-suite filedo-test
     , base >=4.7 && <5
     , bytestring
     , filedo
+    , filepath >=1.4.2.2 && <1.4.100
+    , megaparsec
     , optparse-applicative
     , stache
+    , text
     , yaml
   default-language: Haskell2010
