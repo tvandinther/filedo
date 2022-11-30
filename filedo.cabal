@@ -38,6 +38,7 @@ library
       aeson
     , base >=4.7 && <5
     , bytestring
+    , extra
     , filepath >=1.4.2.2 && <1.4.100
     , megaparsec
     , optparse-applicative
@@ -64,6 +65,7 @@ executable filedo-exe
       aeson
     , base >=4.7 && <5
     , bytestring
+    , extra
     , filedo
     , filepath >=1.4.2.2 && <1.4.100
     , megaparsec
@@ -85,6 +87,7 @@ test-suite filedo-test
       aeson
     , base >=4.7 && <5
     , bytestring
+    , extra
     , filedo
     , filepath >=1.4.2.2 && <1.4.100
     , megaparsec

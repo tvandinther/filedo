@@ -1,1 +1,2 @@
 Hello, {{ name }}!
+{{> partial.mst}}

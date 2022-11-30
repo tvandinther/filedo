@@ -15,25 +15,27 @@ import Actions.MergeData (mergeData')
 import qualified Data.Aeson as JSON
 import qualified Data.ByteString as BS
 import Data.List.NonEmpty (NonEmpty)
+import qualified Data.List.NonEmpty as NE
 import Types.LazyFile (LazyFile, readLazy)
 
 runCompile :: CompileOptions -> IO ()
-runCompile (CompileOptions dfs tfs o) = runCompile' dfs tfs o
+runCompile (CompileOptions dfs tfs pfs o) = runCompile' dfs tfs pfs o
 
-runCompile' :: [FilePath] -> NonEmpty FilePath -> Maybe FilePath -> IO ()
-runCompile' dfs tfs o = do
+runCompile' :: [FilePath] -> NonEmpty FilePath -> [FilePath] -> Maybe FilePath -> IO ()
+runCompile' dfs tfs pfs o = do
     df <- getData dfs
     case df of
         Left err -> print err
         Right d -> do
-            lfs <- mapM readLazy tfs
-            let result = compile $ CompileJob d lfs
+            templates <- mapM readLazy tfs
+            partials <- mapM readLazy pfs
+            let result = compile $ CompileJob d templates partials
             case result of
                 Left err -> print err
-                Right (CompileSuccess compiledbs) -> processOutput o compiledbs
+                Right (CompileSuccess rts ws) -> processOutput o rts
 
 compileTemplates :: NonEmpty LazyFile -> JSON.Value -> Either CompileError CompileSuccess
-compileTemplates ts d = compile $ CompileJob d ts
+compileTemplates ts d = compile $ CompileJob d ts []
 
 -- change sendMergeJob interface to take bytestring instead of filepath
 getData :: [FilePath] -> IO (Either String JSON.Value)
@@ -42,8 +44,18 @@ getData dfs = do
     result <- sendMergeJob' JSON dfs
     return $ Control.Arrow.left errorMessage result
 
-processOutput :: Maybe FilePath -> Text -> IO ()
-processOutput Nothing txt = TIO.putStrLn txt
-processOutput (Just path) txt = do
-    TIO.writeFile path txt
-    print $ "Output written to: " ++ show path
+processOutput :: Maybe FilePath -> NonEmpty Text -> IO ()
+-- processOutput = undefined
+processOutput Nothing ts = TIO.putStrLn $ Data.Text.concat $ NE.toList (NE.intersperse separator ts)
+    where
+        separator = pack "\n---\n"
+processOutput (Just fp) ts = TIO.writeFile fp $ Data.Text.concat $ NE.toList (NE.intersperse separator ts)
+    where
+        separator = pack "\n---\n"
+-- processOutput (Just path) txt = do
+--     TIO.writeFile path txt
+--     print $ "Output written to: " ++ show path
+
+-- TODO: keep file data alongside the template to reconstruct it in the output directory
+-- TODO: Print warnings before output. Add flag to suppress warnings.
+-- TODO: Add flag to allow specification of partials. If value is a directory, use all files in the directory recursively as partials.

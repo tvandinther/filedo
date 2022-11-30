@@ -10,6 +10,7 @@ import qualified Data.List.NonEmpty as NE
 data CompileOptions = CompileOptions
     { dataFiles :: [FilePath]
     , templateFiles :: NonEmpty FilePath
+    , templatePartialFiles :: [FilePath]
     , outputDirectory :: Maybe FilePath }
     deriving (Show)
 
@@ -21,12 +22,20 @@ compileOptions =
     CompileOptions <$>
     dataFilesOption
     <*> templateFilesArgument
+    <*> templatePartialFilesOption
     <*> outputDirectoryOption
 
 templateFilesArgument :: Parser (NonEmpty FilePath)
 templateFilesArgument = someNE (argument str 
     ( metavar "TEMPLATEFILE" 
     <> help "Mustache template." ))
+
+templatePartialFilesOption :: Parser [FilePath]
+templatePartialFilesOption = many (strOption 
+    ( long "partial"
+    <> short 'p'
+    <> metavar "TEMPLATEPARTIALFILE" 
+    <> help "Mustache template partial." ))
 
 dataFilesOption :: Parser [FilePath]
 dataFilesOption = many (strOption 

@@ -29,6 +29,7 @@ dependencies:
 - stache
 - megaparsec
 - filepath >= 1.4.2.2 && < 1.4.100
+- extra
 
 ghc-options:
 - -Wall
