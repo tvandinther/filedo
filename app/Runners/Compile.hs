@@ -10,6 +10,7 @@ import Types
 import qualified Control.Arrow
 import Actions.Compile (CompileError, compile, CompileSuccess(..), CompileJob(..))
 import Data.Text
+import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import Actions.MergeData (mergeData')
 import qualified Data.Aeson as JSON
@@ -17,45 +18,52 @@ import qualified Data.ByteString as BS
 import Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NE
 import Types.LazyFile (LazyFile, readLazy)
+import System.Directory.Extra (listFilesRecursive)
+import Data.List (intersperse)
+import qualified Data.List as L
+import System.FilePath ((</>))
+import System.Directory.Extra (createDirectoryIfMissing)
+import System.FilePath.Posix (takeDirectory)
 
 runCompile :: CompileOptions -> IO ()
-runCompile (CompileOptions dfs tfs pfs o) = runCompile' dfs tfs pfs o
+runCompile (CompileOptions dfs td o) = runCompile' dfs td o
 
-runCompile' :: [FilePath] -> NonEmpty FilePath -> [FilePath] -> Maybe FilePath -> IO ()
-runCompile' dfs tfs pfs o = do
+runCompile' :: [FilePath] -> FilePath -> FilePath -> IO ()
+-- runCompile' = undefined
+runCompile' dfs td o = do
     df <- getData dfs
     case df of
         Left err -> print err
         Right d -> do
-            templates <- mapM readLazy tfs
-            partials <- mapM readLazy pfs
-            let result = compile $ CompileJob d templates partials
+            files <- listFilesRecursive td
+            templates <- mapM (readLazy td) files
+            let result = compile $ CompileJob d templates
             case result of
                 Left err -> print err
-                Right (CompileSuccess rts ws) -> processOutput o rts
+                Right (CompileSuccess rts ws) -> processOutput o ws rts
 
-compileTemplates :: NonEmpty LazyFile -> JSON.Value -> Either CompileError CompileSuccess
-compileTemplates ts d = compile $ CompileJob d ts []
-
--- change sendMergeJob interface to take bytestring instead of filepath
 getData :: [FilePath] -> IO (Either String JSON.Value)
 getData [] = BS.getContents >>= \bs -> return $ JSON.eitherDecodeStrict bs
 getData dfs = do
     result <- sendMergeJob' JSON dfs
     return $ Control.Arrow.left errorMessage result
 
-processOutput :: Maybe FilePath -> NonEmpty Text -> IO ()
--- processOutput = undefined
-processOutput Nothing ts = TIO.putStrLn $ Data.Text.concat $ NE.toList (NE.intersperse separator ts)
+processOutput :: FilePath -> [(FilePath, String)] -> [(FilePath, Text)] -> IO ()
+-- processOutput Nothing ws ts = do
+--     putStrLn $ Prelude.unlines ws
+--     TIO.putStrLn $ Data.Text.concat $ L.intersperse (pack "\n---\n") $ snd <$> ts
+processOutput fp ws ts = do
+    putStrLn $ "There are " ++ show (Prelude.length ws) ++ " warnings:"
+    putStrLn $ Prelude.unlines $ catWarning <$> ws
+    mapM_ processFile ts
     where
-        separator = pack "\n---\n"
-processOutput (Just fp) ts = TIO.writeFile fp $ Data.Text.concat $ NE.toList (NE.intersperse separator ts)
-    where
-        separator = pack "\n---\n"
--- processOutput (Just path) txt = do
---     TIO.writeFile path txt
---     print $ "Output written to: " ++ show path
+        catWarning (fp, w) = fp ++ ": " ++ w
+        processFile (p, t)
+            | T.length t > 0 = do
+            let path = fp </> p
+            createDirectoryIfMissing True $ takeDirectory path
+            putStrLn $ "Writing " ++ path
+            TIO.writeFile path t
+            | otherwise = putStrLn $ "Skipping " ++ p ++ " because it is empty"
 
--- TODO: keep file data alongside the template to reconstruct it in the output directory
--- TODO: Print warnings before output. Add flag to suppress warnings.
--- TODO: Add flag to allow specification of partials. If value is a directory, use all files in the directory recursively as partials.
+-- TODO: Add flag to suppress warnings.

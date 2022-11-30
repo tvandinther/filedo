@@ -6,10 +6,12 @@ module Types.LazyFile (
 import Data.ByteString.Lazy (ByteString)
 import qualified Data.ByteString.Lazy as BSL
 import Data.Functor ( (<&>) )
+import System.FilePath (makeRelative)
 
 data LazyFile = LazyFile
-    { templateFile :: FilePath 
+    { path :: FilePath
+    , relativePath :: FilePath
     , content :: ByteString }
 
-readLazy :: FilePath -> IO LazyFile
-readLazy fp = BSL.readFile fp <&> LazyFile fp
+readLazy :: FilePath -> FilePath -> IO LazyFile
+readLazy root fp = BSL.readFile fp <&> LazyFile fp (makeRelative root fp)

@@ -1,9 +1,12 @@
 ---
 global:
-  generation: callisto
+  generation: 
+    isCallisto: true
   clusterName: callisto-dev
   environment: development
   kubernetesVersion: 1.23
+  privateSubnetIds: ["subnet-0a0a0a0a", "subnet-0b0b0b0b", "subnet-0c0c0c0c"]
+  awsProfile: callisto-dev
 
 aws:
   accountID: 693429498512

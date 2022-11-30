@@ -5,13 +5,14 @@ module Commands.Compile (
 import Options.Applicative
 import Data.List.NonEmpty ( NonEmpty((:|)) )
 import qualified Data.List.NonEmpty as NE
+import System.FilePath (isValid)
 
 -- TODO: Allow templateFile :: FilePath, outputDirectory :: Maybe FilePath OR current (many files to required directory)
 data CompileOptions = CompileOptions
     { dataFiles :: [FilePath]
-    , templateFiles :: NonEmpty FilePath
-    , templatePartialFiles :: [FilePath]
-    , outputDirectory :: Maybe FilePath }
+    , targetDirectory :: FilePath
+    -- , templatePartialFiles :: [FilePath]
+    , outputDirectory :: FilePath }
     deriving (Show)
 
 compileInfo :: ParserInfo CompileOptions
@@ -21,9 +22,15 @@ compileOptions :: Parser CompileOptions
 compileOptions =
     CompileOptions <$>
     dataFilesOption
-    <*> templateFilesArgument
-    <*> templatePartialFilesOption
+    <*> targetDirectoryArgument
+    -- <*> templatePartialFilesOption
     <*> outputDirectoryOption
+
+targetDirectoryArgument :: Parser FilePath
+targetDirectoryArgument = argument dir (metavar "TARGET_DIRECTORY" <> help "Directory containing mustache templates")
+
+dir :: ReadM FilePath
+dir = str >>= \s -> if isValid s then return s else readerError "Invalid directory."
 
 templateFilesArgument :: Parser (NonEmpty FilePath)
 templateFilesArgument = someNE (argument str 
@@ -44,14 +51,16 @@ dataFilesOption = many (strOption
     <> metavar "DATAFILES..." 
     <> help "Data files to use. Last argument takes merge precedence. Stdin will be used if none are specified." ))
 
-outputDirectoryOption :: Parser (Maybe FilePath)
-outputDirectoryOption = optional $ strOption 
+outputDirectoryOption :: Parser FilePath
+outputDirectoryOption = strOption 
     ( long "output" 
     <> short 'o' 
     <> metavar "OUTPUTDIR" 
-    -- <> value "_build"
+    <> value "_build"
     <> help "Directory for compiled template output. If omitted, YAML docs or JSON lines will be sent to Stdout." )
 
 someNE :: Alternative f => f a -> f (NonEmpty a)
 -- someNE = fmap NE.fromList . some -- unsafe (but still safe) implementation
 someNE = liftA2 (:|) <*> many
+
+

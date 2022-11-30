@@ -10,7 +10,7 @@ Resources:
       ClusterName: {{global.clusterName}}
       NodeRole: !GetAtt DefaultNodeRole.Arn
       Subnets:
-        {{global.privateSubnetIds}}
+        {{#global.privateSubnetIds}}
         - {{ . }}
         {{/global.privateSubnetIds}}
 
