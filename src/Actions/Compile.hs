@@ -56,6 +56,7 @@ compile' d (t:ts) = do
     return $ CompileSuccess (Prelude.zip names $ snd <$> rendered) (Prelude.zip names $ displayMustacheWarning <$> concatMap fst rendered)
 
 -- TODO: Create a custom FileScopedWarning type which also includes the file path
+-- TODO: Make ParseErrorBundle print nicely with file scoping too
 renderSingle :: JSON.Value -> Template -> PName -> ([MustacheWarning], Text)
 renderSingle d cache pname = strict $ renderMustacheW (setActiveTemplate pname) d
     where
