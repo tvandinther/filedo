@@ -24,23 +24,26 @@ import qualified Data.List as L
 import System.FilePath ((</>))
 import System.Directory.Extra (createDirectoryIfMissing)
 import System.FilePath.Posix (takeDirectory)
+import Types (Directory)
+
+type TargetDirectory = Directory
+type OutputDirectory = Directory
 
 runCompile :: CompileOptions -> IO ()
-runCompile (CompileOptions dfs td o) = runCompile' dfs td o
+runCompile (CompileOptions dfs td od) = runCompile' dfs td od
 
-runCompile' :: [FilePath] -> FilePath -> FilePath -> IO ()
--- runCompile' = undefined
-runCompile' dfs td o = do
+runCompile' :: [FilePath] -> TargetDirectory -> OutputDirectory -> IO ()
+runCompile' dfs td od = do
     df <- getData dfs
     case df of
         Left err -> print err
         Right d -> do
-            files <- listFilesRecursive td
-            templates <- mapM (readLazy td) files
+            files <- listFilesRecursive $ unDirectory td
+            templates <- mapM (readLazy $ unDirectory td) files
             let result = compile $ CompileJob d templates
             case result of
                 Left err -> print err
-                Right (CompileSuccess rts ws) -> processOutput o ws rts
+                Right (CompileSuccess rts ws) -> processOutput od ws rts
 
 getData :: [FilePath] -> IO (Either String JSON.Value)
 getData [] = BS.getContents >>= \bs -> return $ JSON.eitherDecodeStrict bs
@@ -48,19 +51,20 @@ getData dfs = do
     result <- sendMergeJob' JSON dfs
     return $ Control.Arrow.left errorMessage result
 
-processOutput :: FilePath -> [(FilePath, String)] -> [(FilePath, Text)] -> IO ()
+processOutput :: OutputDirectory -> [(FilePath, String)] -> [(FilePath, Text)] -> IO ()
 -- processOutput Nothing ws ts = do
 --     putStrLn $ Prelude.unlines ws
 --     TIO.putStrLn $ Data.Text.concat $ L.intersperse (pack "\n---\n") $ snd <$> ts
-processOutput fp ws ts = do
+processOutput od ws ts = do
     putStrLn $ "There are " ++ show (Prelude.length ws) ++ " warnings:"
     putStrLn $ Prelude.unlines $ catWarning <$> ws
     mapM_ processFile ts
     where
-        catWarning (fp, w) = fp ++ ": " ++ w
+        root = unDirectory od
+        catWarning (wp, w) = wp ++ ": " ++ w
         processFile (p, t)
             | T.length t > 0 = do
-            let path = fp </> p
+            let path = root </> p
             createDirectoryIfMissing True $ takeDirectory path
             putStrLn $ "Writing " ++ path
             TIO.writeFile path t

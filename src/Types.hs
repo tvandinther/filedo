@@ -1,6 +1,7 @@
 module Types (
     DataFileType(..),
-    TemplateFile
+    TemplateFile,
+    Directory(..),
 ) where
 
 import Types.LazyFile (LazyFile)
@@ -11,3 +12,6 @@ data DataFileType
     deriving (Show)
 
 type TemplateFile = LazyFile
+
+newtype Directory = Directory { unDirectory :: FilePath }
+    deriving (Show)

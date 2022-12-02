@@ -6,13 +6,12 @@ import Options.Applicative
 import Data.List.NonEmpty ( NonEmpty((:|)) )
 import qualified Data.List.NonEmpty as NE
 import System.FilePath (isValid)
+import Types ( Directory(..) )
 
--- TODO: Allow templateFile :: FilePath, outputDirectory :: Maybe FilePath OR current (many files to required directory)
 data CompileOptions = CompileOptions
     { dataFiles :: [FilePath]
-    , targetDirectory :: FilePath
-    -- , templatePartialFiles :: [FilePath]
-    , outputDirectory :: FilePath }
+    , targetDirectory :: Directory
+    , outputDirectory :: Directory }
     deriving (Show)
 
 compileInfo :: ParserInfo CompileOptions
@@ -23,14 +22,14 @@ compileOptions =
     CompileOptions <$>
     dataFilesOption
     <*> targetDirectoryArgument
-    -- <*> templatePartialFilesOption
     <*> outputDirectoryOption
 
-targetDirectoryArgument :: Parser FilePath
+targetDirectoryArgument :: Parser Directory
+-- targetDirectoryArgument = undefined
 targetDirectoryArgument = argument dir (metavar "TARGET_DIRECTORY" <> help "Directory containing mustache templates")
 
-dir :: ReadM FilePath
-dir = str >>= \s -> if isValid s then return s else readerError "Invalid directory."
+dir :: ReadM Directory
+dir = str >>= \s -> if isValid s then return $ Directory s else readerError "Invalid directory."
 
 templateFilesArgument :: Parser (NonEmpty FilePath)
 templateFilesArgument = someNE (argument str 
@@ -51,12 +50,12 @@ dataFilesOption = many (strOption
     <> metavar "DATAFILES..." 
     <> help "Data files to use. Last argument takes merge precedence. Stdin will be used if none are specified." ))
 
-outputDirectoryOption :: Parser FilePath
-outputDirectoryOption = strOption 
+outputDirectoryOption :: Parser Directory
+outputDirectoryOption = option dir 
     ( long "output" 
     <> short 'o' 
     <> metavar "OUTPUTDIR" 
-    <> value "_build"
+    <> value (Directory "_build")
     <> help "Directory for compiled template output. If omitted, YAML docs or JSON lines will be sent to Stdout." )
 
 someNE :: Alternative f => f a -> f (NonEmpty a)
