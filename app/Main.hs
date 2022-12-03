@@ -5,6 +5,7 @@ import Commands( Command(..) )
 import Options ( Opts(..), optsParser )
 import Runners.MergeData (runMergeData)
 import Runners.Compile (runCompile)
+import Runners.Process (runProcess)
 
 
 main :: IO ()
@@ -16,3 +17,4 @@ main = do
 run :: Command -> IO ()
 run (MergeData o) = runMergeData o
 run (Compile o) = runCompile o
+run (Process o) = runProcess o

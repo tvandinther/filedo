@@ -27,6 +27,7 @@ library
   exposed-modules:
       Actions.Compile
       Actions.MergeData
+      Actions.Process
       Types
       Types.FileScoped
       Types.LazyFile
@@ -54,9 +55,12 @@ executable filedo-exe
       Commands
       Commands.Compile
       Commands.MergeData
+      Commands.Process
+      Extensions
       Options
       Runners.Compile
       Runners.MergeData
+      Runners.Process
       Paths_filedo
   hs-source-dirs:
       app
