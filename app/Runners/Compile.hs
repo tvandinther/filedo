@@ -2,72 +2,74 @@ module Runners.Compile (
     runCompile
 ) where
 
-import Commands.Compile (CompileOptions(..))
--- import qualified Data.ByteString.Char8 as BS
-import Actions.MergeData
-import Runners.MergeData(sendMergeJob, sendMergeJob')
-import Types
+import Commands.Compile ( CompileOptions(..) )
+import Actions.MergeData ( MergeDataError(errorMessage) )
+import Runners.MergeData( sendMergeJob' )
+import Types ( DataFileType(JSON), Directory(unDirectory), FileScoped(..) )
 import qualified Control.Arrow
-import Actions.Compile (CompileError, compile, CompileSuccess(..), CompileJob(..))
-import Data.Text
+import Actions.Compile ( CompileError(..), compile, CompileSuccess(..), CompileJob(..) )
+import Data.Text ( Text )
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
-import Actions.MergeData (mergeData')
 import qualified Data.Aeson as JSON
 import qualified Data.ByteString as BS
-import Data.List.NonEmpty (NonEmpty)
-import qualified Data.List.NonEmpty as NE
-import Types.LazyFile (LazyFile, readLazy)
-import System.Directory.Extra (listFilesRecursive)
-import Data.List (intersperse)
-import qualified Data.List as L
-import System.FilePath ((</>))
-import System.Directory.Extra (createDirectoryIfMissing)
-import System.FilePath.Posix (takeDirectory)
-import Types (Directory)
+import Types.LazyFile ( readLazy )
+import System.Directory.Extra ( listFilesRecursive, createDirectoryIfMissing )
+import System.FilePath ( (</>) )
+import System.FilePath.Posix ( takeDirectory )
+import Types.FileScoped ( showPretty )
+-- import qualified Data.Aeson as Yaml
+import Data.Yaml ( decodeEither' )
+import qualified Data.Yaml as Yaml
+import Control.Applicative ((<|>))
+import Data.Yaml.Aeson (prettyPrintParseException)
 
 type TargetDirectory = Directory
 type OutputDirectory = Directory
+type SuppressWarnings = Bool
 
 runCompile :: CompileOptions -> IO ()
-runCompile (CompileOptions dfs td od) = runCompile' dfs td od
-
-runCompile' :: [FilePath] -> TargetDirectory -> OutputDirectory -> IO ()
-runCompile' dfs td od = do
+runCompile (CompileOptions dfs td od w) = do
     df <- getData dfs
     case df of
-        Left err -> print err
+        Left err -> putStrLn err
         Right d -> do
             files <- listFilesRecursive $ unDirectory td
             templates <- mapM (readLazy $ unDirectory td) files
             let result = compile $ CompileJob d templates
             case result of
-                Left err -> print err
-                Right (CompileSuccess rts ws) -> processOutput od ws rts
+                Left err -> printError err
+                Right (CompileSuccess rts ws) -> processOutput w od ws rts
 
 getData :: [FilePath] -> IO (Either String JSON.Value)
-getData [] = BS.getContents >>= \bs -> return $ JSON.eitherDecodeStrict bs
+getData [] = BS.getContents >>= \bs -> return $ Control.Arrow.left prettyPrintParseException $ Yaml.decodeEither' bs
 getData dfs = do
     result <- sendMergeJob' JSON dfs
     return $ Control.Arrow.left errorMessage result
 
-processOutput :: OutputDirectory -> [(FilePath, String)] -> [(FilePath, Text)] -> IO ()
--- processOutput Nothing ws ts = do
---     putStrLn $ Prelude.unlines ws
---     TIO.putStrLn $ Data.Text.concat $ L.intersperse (pack "\n---\n") $ snd <$> ts
-processOutput od ws ts = do
-    putStrLn $ "There are " ++ show (Prelude.length ws) ++ " warnings:"
-    putStrLn $ Prelude.unlines $ catWarning <$> ws
+printError :: CompileError -> IO ()
+printError (CompileError (FileScoped f e)) = putStrLn $ Prelude.concat ["Error in ", f, " ", e]
+
+processOutput :: SuppressWarnings -> OutputDirectory -> [FileScoped String] -> [FileScoped Text] -> IO ()
+processOutput w od ws ts = do
+    printWarnings w ws
     mapM_ processFile ts
     where
         root = unDirectory od
-        catWarning (wp, w) = wp ++ ": " ++ w
-        processFile (p, t)
+        processFile (FileScoped p t)
             | T.length t > 0 = do
             let path = root </> p
             createDirectoryIfMissing True $ takeDirectory path
-            putStrLn $ "Writing " ++ path
+            putStrLn $ "Writing " ++ path ++ "..."
             TIO.writeFile path t
-            | otherwise = putStrLn $ "Skipping " ++ p ++ " because it is empty"
+            | otherwise = putStrLn $ "Skipping " ++ p ++ " because it is empty."
 
--- TODO: Add flag to suppress warnings.
+printWarnings :: SuppressWarnings -> [FileScoped String] -> IO ()
+printWarnings True _ = return ()
+printWarnings False ws = do
+    putStrLn . showHeader . Prelude.length $ ws
+    putStrLn $ Prelude.unlines (showPretty <$> ws)
+    where
+        showHeader 0 = "There are no warnings."
+        showHeader 1 = "There is 1 warning:"
+        showHeader n = "There are " ++ show n ++ " warnings:"

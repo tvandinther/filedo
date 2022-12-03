@@ -1,6 +1,6 @@
 ---
 global:
-  generation: 
+  generation:
     isCallisto: true
   clusterName: callisto-dev
   environment: development

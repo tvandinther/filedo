@@ -3,15 +3,16 @@ module Commands.Compile (
     compileInfo
 ) where
 import Options.Applicative
-import Data.List.NonEmpty ( NonEmpty((:|)) )
-import qualified Data.List.NonEmpty as NE
+-- import Data.List.NonEmpty ( NonEmpty((:|)) )
+-- import qualified Data.List.NonEmpty as NE
 import System.FilePath (isValid)
 import Types ( Directory(..) )
 
 data CompileOptions = CompileOptions
     { dataFiles :: [FilePath]
     , targetDirectory :: Directory
-    , outputDirectory :: Directory }
+    , outputDirectory :: Directory
+    , suppressWarnings :: Bool }
     deriving (Show)
 
 compileInfo :: ParserInfo CompileOptions
@@ -23,25 +24,13 @@ compileOptions =
     dataFilesOption
     <*> targetDirectoryArgument
     <*> outputDirectoryOption
+    <*> suppressWarningsOption
 
 targetDirectoryArgument :: Parser Directory
--- targetDirectoryArgument = undefined
 targetDirectoryArgument = argument dir (metavar "TARGET_DIRECTORY" <> help "Directory containing mustache templates")
 
 dir :: ReadM Directory
 dir = str >>= \s -> if isValid s then return $ Directory s else readerError "Invalid directory."
-
-templateFilesArgument :: Parser (NonEmpty FilePath)
-templateFilesArgument = someNE (argument str 
-    ( metavar "TEMPLATEFILE" 
-    <> help "Mustache template." ))
-
-templatePartialFilesOption :: Parser [FilePath]
-templatePartialFilesOption = many (strOption 
-    ( long "partial"
-    <> short 'p'
-    <> metavar "TEMPLATEPARTIALFILE" 
-    <> help "Mustache template partial." ))
 
 dataFilesOption :: Parser [FilePath]
 dataFilesOption = many (strOption 
@@ -55,11 +44,18 @@ outputDirectoryOption = option dir
     ( long "output" 
     <> short 'o' 
     <> metavar "OUTPUTDIR" 
-    <> value (Directory "_build")
-    <> help "Directory for compiled template output. If omitted, YAML docs or JSON lines will be sent to Stdout." )
+    <> value (Directory default')
+    <> help ("Directory for compiled template output. Default: " ++ default') )
+    where
+        default' = "_build"
 
-someNE :: Alternative f => f a -> f (NonEmpty a)
--- someNE = fmap NE.fromList . some -- unsafe (but still safe) implementation
-someNE = liftA2 (:|) <*> many
+suppressWarningsOption :: Parser Bool
+suppressWarningsOption = switch 
+    ( short 'w'
+    <> help "Suppress warnings." )
+
+-- someNE :: Alternative f => f a -> f (NonEmpty a)
+-- -- someNE = fmap NE.fromList . some -- unsafe (but still safe) implementation
+-- someNE = liftA2 (:|) <*> many
 
 

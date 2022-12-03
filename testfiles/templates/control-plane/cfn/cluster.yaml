@@ -14,7 +14,7 @@ Resources:
       RoleArn: !GetAtt ClusterRole.Arn
       ResourcesVpcConfig:
         SubnetIds:
-          {{global.privateSubnetIds}}
+          {{#global.privateSubnetIds}}
           - {{ . }}
           {{/global.privateSubnetIds}}
 

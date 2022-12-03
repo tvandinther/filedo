@@ -28,6 +28,7 @@ library
       Actions.Compile
       Actions.MergeData
       Types
+      Types.FileScoped
       Types.LazyFile
   other-modules:
       Paths_filedo

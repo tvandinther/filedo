@@ -2,9 +2,11 @@ module Types (
     DataFileType(..),
     TemplateFile,
     Directory(..),
+    FileScoped(..),
 ) where
 
-import Types.LazyFile (LazyFile)
+import Types.LazyFile (LazyFile(..))
+import Types.FileScoped (FileScoped(..))
 
 data DataFileType
     = JSON

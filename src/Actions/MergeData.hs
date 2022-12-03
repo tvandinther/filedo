@@ -18,6 +18,7 @@ import Data.ByteString.Lazy (toStrict)
 import Data.List (foldl1')
 import Data.Text
 import Data.Text.Encoding (decodeUtf8, encodeUtf8)
+import Data.Yaml (prettyPrintParseException)
 
 data MergeDataJob = MergeDataJob
     { dataFiles :: [Text]
@@ -29,7 +30,7 @@ data MergeDataError = MergeDataError { errorMessage :: String } deriving (Show)
 
 mergeData :: MergeDataJob -> Either MergeDataError MergeDataSuccess
 mergeData MergeDataJob{ dataFiles=dfs, outputType=t } = case mapM Yaml.decodeEither' (encodeUtf8 <$> dfs) of
-    Left err -> Left $ MergeDataError { errorMessage = show err }
+    Left err -> Left $ MergeDataError { errorMessage = prettyPrintParseException err }
     Right xs -> Right $ MergeDataSuccess { mergedData = encodeAST t $ mergeASTs xs }
 
 mergeData' :: MergeDataJob -> Either MergeDataError JSON.Value

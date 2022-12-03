@@ -17,7 +17,7 @@ import qualified Data.Aeson as JSON
 
 runMergeData :: MergeDataOptions -> IO ()
 runMergeData (MergeDataOptions dfs o t) = sendMergeJob t dfs >>= \case
-    Left (MergeDataError err) -> print err
+    Left (MergeDataError err) -> putStrLn err
     Right bs -> processOutput o bs
 
 sendMergeJob :: DataFileType -> [FilePath] -> IO (Either MergeDataError Text)

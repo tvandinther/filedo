@@ -1,2 +1,2 @@
 Hello, {{ name }}!
-{{> partial.mst}}
+{{> subdir/partial.mst}}

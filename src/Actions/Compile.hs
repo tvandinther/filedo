@@ -7,7 +7,7 @@ module Actions.Compile (
     compile
 ) where
 
-import Data.Text ( Text, pack )
+import Data.Text ( Text, pack, unpack )
 
 import Text.Mustache (compileMustacheText, renderMustacheW, renderMustache)
 import Data.Foldable (foldrM)
@@ -30,62 +30,51 @@ import System.Directory.Extra (listFilesRecursive)
 import qualified Data.Text.Lazy as LT
 import qualified Data.List.NonEmpty as NE
 import qualified Control.Arrow
+import Types ( FileScoped(..) )
+import Control.Arrow ((|||), (&&&))
+import Data.Bifunctor (Bifunctor(bimap))
 
 data CompileJob = CompileJob
     { templateData :: JSON.Value
     , templates :: [LazyFile] }
 
 data CompileSuccess = CompileSuccess 
-    { renderedTemplates :: [(FilePath, Text)]
-    , warnings :: [(FilePath, String)] }
+    { renderedTemplates :: [FileScoped Text]
+    , warnings :: [FileScoped String] }
     deriving (Show)
 
-newtype CompileError = CompileError String deriving (Show)
+newtype CompileError = CompileError {getMessage :: FileScoped String} deriving (Show)
+
+type ParseError = ParseErrorBundle Text Void
 
 compile :: CompileJob -> Either CompileError CompileSuccess
--- compile = undefined
-compile (CompileJob d ts) = Control.Arrow.left (CompileError . errorBundlePretty) $ compile' d ts
-
-compile' :: JSON.Value -> [LazyFile] -> Either (ParseErrorBundle Text Void) CompileSuccess
--- compile' = undefined
-compile' _ [] = Right $ CompileSuccess [] []
-compile' d (t:ts) = do
-    cache <- compileMustacheTexts (t:|ts)
-    let names = relativePath <$> ts
-    let rendered = fmap (renderSingle d cache) (filepathToPName <$> names)
-    return $ CompileSuccess (Prelude.zip names $ snd <$> rendered) (Prelude.zip names $ displayMustacheWarning <$> concatMap fst rendered)
-
--- TODO: Create a custom FileScopedWarning type which also includes the file path
--- TODO: Make ParseErrorBundle print nicely with file scoping too
-renderSingle :: JSON.Value -> Template -> PName -> ([MustacheWarning], Text)
-renderSingle d cache pname = strict $ renderMustacheW (setActiveTemplate pname) d
+compile (CompileJob _ []) = Right $ CompileSuccess [] []
+compile (CompileJob d (t:ts)) = bimap mkError mkSuccess doJob
     where
+        mkSuccess r = CompileSuccess (snd <$> r) $ concatMap fst r
+        mkError = CompileError . fmap errorBundlePretty
+        doJob = compileMustacheTexts (t:|ts) >>= \cache -> do
+            return $ fmap (renderSingle d cache) (filepathToPName . relativePath <$> ts)
+
+renderSingle :: JSON.Value -> Template -> PName -> ([FileScoped String], FileScoped Text)
+renderSingle d cache pname = 
+    fileScope $ strict $ renderMustacheW (setActiveTemplate pname) d
+    where
+        scope = pNameToFilePath pname
+        fileScope (ws, t) = (FileScoped scope . displayMustacheWarning <$> ws, FileScoped scope t)
         strict (ws, t) = (ws, Data.Text.Lazy.toStrict t)
         setActiveTemplate n = cache { templateActual = n }
 
--- renderMustacheWCache :: Maybe Template -> Template -> JSON.Value -> ([MustacheWarning], Text)
--- renderMustacheWCache cache template d = strict $ renderMustacheW (addCache template cache) d
---     where
---         strict (ws, t) = (ws, Data.Text.Lazy.toStrict t)
---         addCache t Nothing = t
---         addCache t (Just c) = t <> c
-
-compileTemplate :: LazyFile -> Either (ParseErrorBundle Text Void) Template
-compileTemplate (LazyFile fp rfp bsl) = compileMustacheText (PName $ Data.Text.pack rfp) (decodeUtf8 $ Data.ByteString.toStrict bsl)
-
-compileMustacheTexts :: NonEmpty LazyFile -> Either (ParseErrorBundle Text Void) Template
+compileMustacheTexts :: NonEmpty LazyFile -> Either (FileScoped ParseError) Template
 compileMustacheTexts (x :| xs) = compileTemplate x >>= \t -> foldrM compileMerge t xs
     where
         compileMerge lf tmp = (<>) <$> compileTemplate lf <*> pure tmp
 
--- compileCache :: NonEmpty LazyFile -> Either (ParseErrorBundle Text Void) Template
--- compileCache (x:|xs) = compileMustacheTexts (x :| xs)
+compileTemplate :: LazyFile -> Either (FileScoped ParseError) Template
+compileTemplate (LazyFile fp rfp bsl) = Control.Arrow.left (FileScoped fp) $ compileMustacheText (PName $ Data.Text.pack rfp) (decodeUtf8 $ Data.ByteString.toStrict bsl)
 
 filepathToPName :: FilePath -> PName
 filepathToPName = PName . Data.Text.pack
 
--- compileMustacheTextsCache' :: NonEmpty LazyFile -> IO (Either (ParseErrorBundle Text Void) Template)
--- compileMustacheTextsCache' (x :| _) = do
---     files <- listFilesRecursive $ takeDirectory $ templateFile x
---     lfs <- mapM readLazy files
---     return $ compileMustacheTexts' lfs
+pNameToFilePath :: PName -> FilePath
+pNameToFilePath = Data.Text.unpack . unPName
