@@ -6,41 +6,37 @@ module Actions.MergeData (
     mergeData'
 ) where
 
-import Data.ByteString (ByteString)
-import qualified Data.Yaml as Yaml
-
+import qualified Data.Yaml as YAML
 import qualified Data.Aeson as JSON
 import Data.Aeson.KeyMap (unionWith)
-import Data.Aeson.Types ( Value(..), Object(..) )
-
 import Types (DataFileType(..))
 import Data.ByteString.Lazy (toStrict)
 import Data.List (foldl1')
-import Data.Text
+import Data.Text ( Text )
 import Data.Text.Encoding (decodeUtf8, encodeUtf8)
-import Data.Yaml (prettyPrintParseException)
+import Data.Bifunctor (Bifunctor(bimap))
+import qualified Control.Arrow
 
 data MergeDataJob = MergeDataJob
-    { dataFiles :: [Text]
-    , outputType :: DataFileType }
+    { outputType :: DataFileType
+    , dataFiles :: [Text] }
     deriving (Show)
 
-data MergeDataSuccess = MergeDataSuccess { mergedData :: Text } deriving (Show)
-data MergeDataError = MergeDataError { errorMessage :: String } deriving (Show)
+newtype MergeDataSuccess = MergeDataSuccess { mergedData :: Text } deriving (Show)
+newtype MergeDataError = MergeDataError { errorMessage :: String } deriving (Show)
 
 mergeData :: MergeDataJob -> Either MergeDataError MergeDataSuccess
-mergeData MergeDataJob{ dataFiles=dfs, outputType=t } = case mapM Yaml.decodeEither' (encodeUtf8 <$> dfs) of
-    Left err -> Left $ MergeDataError { errorMessage = prettyPrintParseException err }
-    Right xs -> Right $ MergeDataSuccess { mergedData = encodeAST t $ mergeASTs xs }
+mergeData job = Control.Arrow.right (MergeDataSuccess . encodeAST (outputType job)) $ mergeData' job
 
 mergeData' :: MergeDataJob -> Either MergeDataError JSON.Value
-mergeData' MergeDataJob{ dataFiles=dfs } = case mapM Yaml.decodeEither' (encodeUtf8 <$> dfs) of
-    Left err -> Left $ MergeDataError { errorMessage = show err }
-    Right xs -> Right $ mergeASTs xs
+mergeData' (MergeDataJob _ dfs) = bimap mkError mkSuccess $ mapM YAML.decodeEither' (encodeUtf8 <$> dfs)
+    where
+        mkError = MergeDataError . YAML.prettyPrintParseException
+        mkSuccess = mergeASTs
 
-encodeAST :: DataFileType -> Yaml.Value -> Text
+encodeAST :: DataFileType -> YAML.Value -> Text
 encodeAST JSON = decodeUtf8 . toStrict . JSON.encode
-encodeAST YAML = decodeUtf8 . Yaml.encode
+encodeAST YAML = decodeUtf8 . YAML.encode
 
 mergeASTs :: [JSON.Value] -> JSON.Value
 mergeASTs = Data.List.foldl1' mergeAST
