@@ -27,7 +27,7 @@ type SuppressWarnings = Bool
 runCompile :: CompileOptions -> IO ()
 runCompile (CompileOptions dfs td od w) = getData dfs >>= either putStrLn go
     where
-        go d = createJob td d >>= either printError (processOutput w od) . compile
+        go d = createJob td d >>= either printErrors (processOutput w od) . compile
 
 createJob :: TargetDirectory -> Yaml.Value -> IO CompileJob
 createJob td d = do
@@ -41,13 +41,13 @@ getData dfs = do
     result <- sendJob mergeData' JSON dfs
     return $ Control.Arrow.left errorMessage result
 
-printError :: CompileError -> IO ()
-printError (CompileError (FileScoped f e)) = putStrLn $ Prelude.concat ["Error in ", f, " ", e]
+printErrors :: CompileError -> IO ()
+printErrors (CompileError es) = putStrLn $ Prelude.concatMap showError es
+    where
+        showError (FileScoped f e) = Prelude.concat ["Error in ", f, " ", e]
 
 processOutput :: SuppressWarnings -> OutputDirectory -> CompileSuccess -> IO ()
-processOutput w od (CompileSuccess ts ws) = do
-    printWarnings w ws
-    mapM_ processFile ts
+processOutput w od (CompileSuccess ws ts) = printWarnings w ws >> mapM_ processFile ts
     where
         root = unDirectory od
         processFile (FileScoped p t)

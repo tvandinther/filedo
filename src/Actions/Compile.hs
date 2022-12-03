@@ -1,4 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE LambdaCase #-}
 module Actions.Compile (
     CompileJob(..),
@@ -9,41 +8,34 @@ module Actions.Compile (
 
 import Data.Text ( Text, pack, unpack )
 
-import Text.Mustache (compileMustacheText, renderMustacheW, renderMustache)
-import Data.Foldable (foldrM)
-import Data.List.NonEmpty
+import Text.Mustache (compileMustacheText, renderMustacheW)
+import Data.List.NonEmpty ( NonEmpty(..) )
 import qualified Data.Aeson.Types as JSON
-import Data.Void
+import Data.Void ( Void )
 import Text.Megaparsec.Error (ParseErrorBundle)
 import Text.Mustache.Type
+    ( displayMustacheWarning, PName(..), Template(templateActual) )
 import Text.Megaparsec (errorBundlePretty)
 import Data.Text.Lazy (toStrict)
 import Data.ByteString (toStrict)
-import Types.LazyFile (LazyFile(..), readLazy)
-import System.FilePath (dropExtension, takeFileName, makeRelative)
+import Types.LazyFile (LazyFile(..))
 import Data.Text.Encoding (decodeUtf8)
-import Text.Mustache.Compile (compileMustacheDir')
-import System.FilePath.Posix (takeDirectory)
-import Control.Monad (forM_, foldM)
-import Text.Mustache (compileMustacheFile)
-import System.Directory.Extra (listFilesRecursive)
-import qualified Data.Text.Lazy as LT
-import qualified Data.List.NonEmpty as NE
 import qualified Control.Arrow
-import Types ( FileScoped(..) )
-import Control.Arrow ((|||), (&&&))
+import Types.FileScoped ( FileScoped(..) )
 import Data.Bifunctor (Bifunctor(bimap))
+import Data.Either (partitionEithers)
+import Data.Semigroup (Semigroup(sconcat))
 
 data CompileJob = CompileJob
     { templateData :: JSON.Value
     , templates :: [LazyFile] }
 
 data CompileSuccess = CompileSuccess 
-    { renderedTemplates :: [FileScoped Text]
-    , warnings :: [FileScoped String] }
+    { warnings :: [FileScoped String]
+    , renderedTemplates :: [FileScoped Text] }
     deriving (Show)
 
-newtype CompileError = CompileError {getMessage :: FileScoped String} deriving (Show)
+newtype CompileError = CompileError {getMessages :: [FileScoped String]} deriving (Show)
 
 type ParseError = ParseErrorBundle Text Void
 
@@ -51,27 +43,28 @@ compile :: CompileJob -> Either CompileError CompileSuccess
 compile (CompileJob _ []) = Right $ CompileSuccess [] []
 compile (CompileJob d (t:ts)) = bimap mkError mkSuccess doJob
     where
-        mkSuccess r = CompileSuccess (snd <$> r) $ concatMap fst r
-        mkError = CompileError . fmap errorBundlePretty
-        doJob = compileMustacheTexts (t:|ts) >>= \cache -> do
-            return $ fmap (renderSingle d cache) (filepathToPName . relativePath <$> ts)
+        mkSuccess r = CompileSuccess (concatMap fst r) (snd <$> r)
+        mkError :: [FileScoped ParseError] -> CompileError
+        mkError es = CompileError $ fmap errorBundlePretty <$> es
+        doJob = compileMustacheTexts (t:|ts) >>= \cache -> pure $ renderSingle d cache . (filepathToPName . relativePath) <$> ts
 
 renderSingle :: JSON.Value -> Template -> PName -> ([FileScoped String], FileScoped Text)
-renderSingle d cache pname = 
-    fileScope $ strict $ renderMustacheW (setActiveTemplate pname) d
+renderSingle d cache pname = fileScope $ strict $ renderMustacheW (setActiveTemplate pname) d
     where
         scope = pNameToFilePath pname
         fileScope (ws, t) = (FileScoped scope . displayMustacheWarning <$> ws, FileScoped scope t)
         strict (ws, t) = (ws, Data.Text.Lazy.toStrict t)
         setActiveTemplate n = cache { templateActual = n }
 
-compileMustacheTexts :: NonEmpty LazyFile -> Either (FileScoped ParseError) Template
-compileMustacheTexts (x :| xs) = compileTemplate x >>= \t -> foldrM compileMerge t xs
+compileMustacheTexts :: NonEmpty LazyFile -> Either [FileScoped ParseError] Template
+compileMustacheTexts (x:|xs) = process . partitionEithers $ compileTemplate <$> x:xs
     where
-        compileMerge lf tmp = (<>) <$> compileTemplate lf <*> pure tmp
+        process (errs, []) = Left errs
+        process (_, t:ts) = Right . sconcat $ (t:|ts)
 
 compileTemplate :: LazyFile -> Either (FileScoped ParseError) Template
-compileTemplate (LazyFile fp rfp bsl) = Control.Arrow.left (FileScoped fp) $ compileMustacheText (PName $ Data.Text.pack rfp) (decodeUtf8 $ Data.ByteString.toStrict bsl)
+compileTemplate (LazyFile fp rfp bsl) = Control.Arrow.left (FileScoped fp) 
+    $ compileMustacheText (filepathToPName rfp) (decodeUtf8 $ Data.ByteString.toStrict bsl)
 
 filepathToPName :: FilePath -> PName
 filepathToPName = PName . Data.Text.pack
