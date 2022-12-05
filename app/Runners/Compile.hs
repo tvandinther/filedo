@@ -29,6 +29,9 @@ runCompile (CompileOptions dfs td od w) = getData dfs >>= either putStrLn go
     where
         go d = createJob td d >>= either printErrors (processOutput w od) . compile
 
+runCompile' :: [FilePath] -> TargetDirectory -> SuppressWarnings -> IO (Either CompileError CompileSuccess)
+runCompile' = undefined
+
 createJob :: TargetDirectory -> Yaml.Value -> IO CompileJob
 createJob td d = do
     files <- listFilesRecursive $ unDirectory td

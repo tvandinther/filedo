@@ -7,6 +7,7 @@ import Options.Applicative
 import Commands
 import Commands.MergeData
 import Commands.Compile
+import Commands.Process
 
 data Opts = Opts
     { verbose :: Bool
@@ -16,10 +17,11 @@ data Opts = Opts
 programOptions :: Parser Opts
 programOptions =
     Opts <$> verbosityParser <*>
-    hsubparser (mergeDataCommand <> compileCommand)
+    hsubparser (mergeDataCommand <> compileCommand <> processCommand)
     where
         mergeDataCommand = command "merge-data" $ MergeData <$> mergeDataInfo
         compileCommand = command "compile" $ Compile <$> compileInfo
+        processCommand = command "process" $ Process <$> processInfo
 
 optsParser :: ParserInfo Opts
 optsParser =

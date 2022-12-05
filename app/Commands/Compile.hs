@@ -1,6 +1,8 @@
 module Commands.Compile (
     CompileOptions(..),
-    compileInfo
+    compileInfo,
+    dataFilesOption,
+    suppressWarningsFlag
 ) where
 
 import Options.Applicative
@@ -23,7 +25,7 @@ compileOptions =
     dataFilesOption
     <*> targetDirectoryArgument
     <*> outputDirectoryOption
-    <*> suppressWarningsOption
+    <*> suppressWarningsFlag
 
 targetDirectoryArgument :: Parser Directory
 targetDirectoryArgument = argument directory (metavar "TARGET_DIRECTORY" <> help "Directory containing mustache templates")
@@ -45,7 +47,7 @@ outputDirectoryOption = option directory
     where
         default' = "_build"
 
-suppressWarningsOption :: Parser Bool
-suppressWarningsOption = switch 
+suppressWarningsFlag :: Parser Bool
+suppressWarningsFlag = switch 
     ( short 'w'
     <> help "Suppress warnings." )
