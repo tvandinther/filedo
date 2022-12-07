@@ -14,9 +14,7 @@ Resources:
       RoleArn: !GetAtt ClusterRole.Arn
       ResourcesVpcConfig:
         SubnetIds:
-          {{#global.privateSubnetIds}}
-          - {{ . }}
-          {{/global.privateSubnetIds}}
+          {{>templates/partials/subnets.yaml}}
 
   ClusterRole:
     Type: AWS::IAM::Role

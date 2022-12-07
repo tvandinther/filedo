@@ -1,0 +1,10 @@
+---
+global:
+  clusterName: cluster-prod
+  environment: development
+  privateSubnetIds: ["subnet-1a1a1a1a", "subnet-1b1b1b1b", "subnet-1c1c1c1c"]
+  awsProfile: cluster-prod
+
+aws:
+  accountID: 662458255221
+  clusterRootRoleName: aws-root-role-prod

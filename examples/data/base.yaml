@@ -1,0 +1,7 @@
+---
+global:
+  generation:
+    isNew: true
+  kubernetesVersion: 1.23
+
+aws:

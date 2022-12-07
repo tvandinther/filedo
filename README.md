@@ -60,7 +60,7 @@ Available options:
   -w                       Suppress warnings.
   -h,--help                Show this help text
 ```
-This is the main command of **filedo**. It parses a `YAML` file with the rule configuration and executes them. This command can operate either on a directory of compiled templates as if they were any other files, or templates can be compiled and used in-process with the `-c --compile` flag. This command is composed of the `merge-data` and `compile` commands.
+This is the main command of **filedo**. It parses a `YAML` file with the rule configuration and executes them. This command can operate either on a directory of compiled templates as if they were any other files, or templates can be compiled and used in-process with the `-c --compile` flag. If data is specified with the `-d --data` option, the rule configuration will be compiled in-process to substitute any values. This command is composed of the `merge-data` and `compile` commands.
 
 ---
 ## Rule YAML

@@ -1,4 +1,4 @@
-# targets: "**" # targets all files by default
+# targets: "*" # targets all files by default
 rules: # rule name
   - priority: 9999999 # priority of the rule, rules with higher values are executed before rules with lower values, default 0
     skip: true # this rule will not be run
@@ -6,7 +6,7 @@ rules: # rule name
       - "**/"
     exclude: # exclude directories, i.e. exclude cfn directories
       - "**/cfn"
-    pre: ["echo", "Listing all non-cfn directories"] # a command to run before the rule
+    pre: ["echo", "Listing all non-cfn directories", "AWS_PROFILE=$AWS_PROFILE", "AWS_REGION=$AWS_REGION"] # a command to run before the rule
     parallelise: true # run the commands in parallel, default false
     ignoreErrors: true # ignore command errors, default false
     command: ["echo", "$path"] # a command to run for each target, variables are auto-populated: $path is the path of the target, $name is the name of the target without extensions
@@ -20,19 +20,21 @@ rules: # rule name
       - priority: 10
         targets: 
         - "**/cfn/*.yaml" # targets all yaml files in cfn directories
-        command: ["aws", "cloudformation", "deploy", "--template-file", "$path", "--stack-name", "$name", "--capabilities", "CAPABILITY_IAM"]
-
+        pre: ["echo", "AWS_PROFILE=$AWS_PROFILE", "AWS_REGION=$AWS_REGION"]
+        command: ["echo", "aws", "cloudformation", "deploy", "--template-file", "$path", "--stack-name", "$name", "--capabilities", "CAPABILITY_IAM"]
+      
       - targets: # targetes all yaml files
           - "**/*.yaml"
         exclude: # exclude all yaml files in cfn directories
           - "**/cfn/*.yaml"
         useStdIn: true # pipes the file contents into the command via stdin
         command:
+          - echo
           - kubectl
           - apply
           - -f
           - "-"
-        pre: ["aws", "eks", "update-kubeconfig", "--name", "{{global.clusterName }}"]
+        pre: ["echo", "aws", "eks", "update-kubeconfig", "--name", "{{global.clusterName }}"]
 
 # set environment variables globally
 environment:

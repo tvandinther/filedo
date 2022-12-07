@@ -1,0 +1,10 @@
+---
+global:
+  clusterName: cluster-preprod
+  environment: development
+  privateSubnetIds: ["subnet-0a0a0a0a", "subnet-0b0b0b0b", "subnet-0c0c0c0c"]
+  awsProfile: cluster-preprod
+
+aws:
+  accountID: 662426135221
+  clusterRootRoleName: aws-root-role-preprod

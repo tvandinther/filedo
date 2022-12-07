@@ -1,7 +1,7 @@
-{{#global.generation.isCallisto}}
+{{#global.generation.isNew}}
 ---
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Callisto default node group'
+Description: 'Cluster default node group'
 
 Resources:
   DefaultNodegroup:
@@ -10,9 +10,7 @@ Resources:
       ClusterName: {{global.clusterName}}
       NodeRole: !GetAtt DefaultNodeRole.Arn
       Subnets:
-        {{#global.privateSubnetIds}}
-        - {{ . }}
-        {{/global.privateSubnetIds}}
+        {{> templates/partials/subnets.yaml}}
 
   DefaultNodeRole:
     Type: AWS::IAM::Role
@@ -31,4 +29,4 @@ Resources:
         - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
         - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
         - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
-{{/global.generation.isCallisto}}
+{{/global.generation.isNew}}
