@@ -1,7 +1,7 @@
 # targets: "*" # targets all files by default
 rules: # rule name
-  - priority: 9999999 # priority of the rule, rules with higher values are executed before rules with lower values, default 0
-    skip: true # this rule will not be run
+  - priority: 10 # priority of the rule, rules with higher values are executed before rules with lower values, default 0
+    skip: false # this rule will not be run
     targets: # targets the rule to apply on each pattern match, i.e. at every directory
       - "**/"
     exclude: # exclude directories, i.e. exclude cfn directories
@@ -17,7 +17,7 @@ rules: # rule name
   
   - targets: ["*/"]
     rules:
-      - priority: 10
+      - priority: 9999
         targets: 
         - "**/cfn/*.yaml" # targets all yaml files in cfn directories
         pre: ["echo", "AWS_PROFILE=$AWS_PROFILE", "AWS_REGION=$AWS_REGION"]
@@ -27,6 +27,7 @@ rules: # rule name
           - "**/*.yaml"
         exclude: # exclude all yaml files in cfn directories
           - "**/cfn/*.yaml"
+          - "data/*"
         useStdIn: true # pipes the file contents into the command via stdin
         command:
           - echo
@@ -34,7 +35,7 @@ rules: # rule name
           - apply
           - -f
           - "-"
-        pre: ["echo", "aws", "eks", "update-kubeconfig", "--name", "{{global.clusterName }}"]
+        pre: ["echo", "aws", "eks", "update-kubeconfig", "--name", "{{global.clusterName}}"]
 
 # set environment variables globally
 environment:

@@ -29,6 +29,7 @@ library
       Actions.MergeData
       Actions.Process
       Types
+      Types.Command
       Types.FileScoped
       Types.LazyFile
       Types.Rule

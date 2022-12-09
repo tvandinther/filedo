@@ -1,7 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 module Types.Rule (
-    Rule(..)
+    Rule(..),
+    Command(..),
+    GlobPattern,
 ) where
 
 import Data.Map ( Map )
@@ -10,15 +12,7 @@ import qualified Data.Yaml as YAML
 import Data.Aeson ((.:?), (.!=))
 import System.FilePath.Glob ( Pattern, compile )
 import qualified Data.Text as T
-import Data.Vector
-
-newtype Command = Command { unCommand :: [String] }
-    deriving (Show)
-
-instance FromJSON Command where
-    parseJSON (YAML.String s) = return $ Command [T.unpack s]
-    parseJSON (YAML.Array xs) = Command <$> Prelude.mapM YAML.parseJSON (Data.Vector.toList xs)
-    parseJSON _ = fail "Command must be a string or an array of strings"
+import Types.Command ( Command(..) )
 
 type GlobPattern = Pattern
 
