@@ -11,9 +11,8 @@ import Types.Command (Cmd(..))
 import Types.FileScoped (FileScoped(..))
 import System.FilePath.Glob (match, decompile, compile, simplify)
 import Data.List.Extra (sortOn)
-import qualified Data.Set as Set
 import System.FilePath ((</>))
-import qualified Debug.Trace as Debug
+import Data.Ord (Down(..))
 
 data ProcessJob = ProcessJob
     { targetDirectory :: String
@@ -21,8 +20,8 @@ data ProcessJob = ProcessJob
     , files :: [FilePath]
     }
 
-data ProcessSuccess = ProcessSuccess
-    { placeholder :: [Cmd] }
+newtype ProcessSuccess = ProcessSuccess
+    { cmds :: [Cmd] }
     deriving (Show)
 
 newtype ProcessError = ProcessError { getMessage :: String } deriving (Show)
@@ -31,11 +30,18 @@ process :: ProcessJob -> Either ProcessError ProcessSuccess
 process job = Right $ ProcessSuccess $ processRule (files job) (rule job)
 
 processRule :: [FilePath] -> Rule -> [Cmd]
-processRule _ (Rule{skip=True}) = []
-processRule fps r = filter (const True) allCommands ++ concatMap (processRule fps) (sortOn priority $ R.rules r)
+processRule fps r = processRule' fps (targets r) r
+
+processRule' :: [FilePath] -> [GlobPattern] -> Rule -> [Cmd]
+processRule' _ _ (Rule{skip=True}) = []
+processRule' fs rootPatterns rule = allCommands ++ concatMap 
+    (processRule' fs newRoots)
+    (prioritisedSubrules rule)
     where
-        expandedCommands = expandCommand (decompile $ head $ targets r) fps r
-        allCommands = addPreHook r $ addPostHook r $ (Scoped <$> expandedCommands)
+        prioritisedSubrules r = sortOn (Down . priority) $ rules r
+        newRoots = cartesianConcatGlobs rootPatterns (targets rule)
+        allCommands = addPreHook rule $ addPostHook rule $ Scoped <$> expandedCommands
+        expandedCommands = expandCommand rootPatterns fs rule
 
 addPreHook :: Rule -> [Cmd] -> [Cmd]
 addPreHook (Rule{pre=Command []}) = id
@@ -45,16 +51,17 @@ addPostHook :: Rule -> [Cmd] -> [Cmd]
 addPostHook (Rule{post=Command []}) = id
 addPostHook (Rule{post=hook}) = flip (++) [Unscoped hook]
 
-
--- expandCommand :: [FilePath] -> Command -> [GlobPattern] -> [FileScoped Command]
--- expandCommand _ (Rule{command=Command []}) = const []
--- expandCommand files cmd = concatMap $ \pattern -> flip FileScoped cmd <$> filter (match pattern) files
-
-expandCommand :: FilePath -> [FilePath] -> Rule -> [FileScoped Command]
+expandCommand :: [GlobPattern] -> [FilePath] -> Rule -> [FileScoped Command]
 expandCommand _ _ (Rule{command=Command []}) = []
-expandCommand root fs (Rule{command=cmd,targets=tInclude,exclude=tExclude}) = 
+expandCommand rootPatterns fs (Rule{command=cmd,targets=tInclude,exclude=tExclude}) = 
     flip FileScoped cmd <$> files
     where
         files = filter (\fp -> isIncludedFile fp && not (isExcludedFile fp)) fs
-        isIncludedFile fp = any (`match` fp) ( simplify . compile . (root </>) . decompile <$> tInclude)
-        isExcludedFile fp = any (`match` fp) ( simplify . compile . (root </>) . decompile <$> tExclude)
+        isIncludedFile fp = any (`match` fp) (cartesianConcatGlobs rootPatterns tInclude)
+        isExcludedFile fp = any (`match` fp) (cartesianConcatGlobs rootPatterns tExclude)
+
+cartesianConcatGlobs :: [GlobPattern] -> [GlobPattern] -> [GlobPattern]
+cartesianConcatGlobs [] _ = []
+cartesianConcatGlobs _ [] = []
+cartesianConcatGlobs roots subs = simplify . compile <$> 
+    [root </> sub | root <- decompile <$> roots, sub <- decompile <$> subs]

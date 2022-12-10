@@ -1,7 +1,3 @@
-TODO: Add support for directories. Make glob patterns also match directories.
-TODO: Make sub patterns scoped to parent targets
-TODO: Decide how to deal with multiple targets. Cartesian product acceptable?
-
 TODO: Add support for in-process compilation for the process command
 
 TODO: Add support for environment variables

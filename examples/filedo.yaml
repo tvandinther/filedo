@@ -14,10 +14,9 @@ rules: # rule name
     environment: # override environment variables for the execution of the rule
       AWS_PROFILE: "{{global.awsProfile}}"
   
-  
-  - targets: ["*/"]
     rules:
       - priority: 9999
+        # skip: true
         targets: 
         - "**/cfn/*.yaml" # targets all yaml files in cfn directories
         pre: ["echo", "AWS_PROFILE=$AWS_PROFILE", "AWS_REGION=$AWS_REGION"]
@@ -25,6 +24,7 @@ rules: # rule name
       
       - targets: # targetes all yaml files
           - "**/*.yaml"
+        # skip: true
         exclude: # exclude all yaml files in cfn directories
           - "**/cfn/*.yaml"
           - "data/*"
