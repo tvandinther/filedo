@@ -6,7 +6,6 @@ module Actions.Process (
     expandCommand
 ) where
 import Types.Rule ( Rule(..), Command(..), GlobPattern )
-import qualified Types.Rule as R
 import Types.Command (Cmd(..))
 import Types.FileScoped (FileScoped(..))
 import System.FilePath.Glob (match, decompile, compile, simplify)

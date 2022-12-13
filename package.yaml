@@ -33,6 +33,7 @@ dependencies:
 - extra
 - Glob
 - vector
+- transformers
 
 ghc-options:
 - -Wall

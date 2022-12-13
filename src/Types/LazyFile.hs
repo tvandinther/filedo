@@ -1,6 +1,7 @@
 module Types.LazyFile (
     LazyFile(..),
-    readLazy
+    readLazy,
+    mkLazyFile
 ) where
 
 import Data.ByteString.Lazy (ByteString)
@@ -12,6 +13,10 @@ data LazyFile = LazyFile
     { path :: FilePath
     , relativePath :: FilePath
     , content :: ByteString }
+    deriving (Show)
 
 readLazy :: FilePath -> FilePath -> IO LazyFile
 readLazy root fp = BSL.readFile fp <&> LazyFile fp (makeRelative root fp)
+
+mkLazyFile :: FilePath -> FilePath -> ByteString -> LazyFile
+mkLazyFile root fp = LazyFile fp (makeRelative root fp)
