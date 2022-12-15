@@ -31,24 +31,25 @@ runProcess (ProcessOptions d rf _ [] w) = do
 runProcess (ProcessOptions d rf _ dfs w) = processWithData d rf dfs w
 
 processWithData :: Directory -> FilePath -> [FilePath] -> Bool -> IO ()
-processWithData d rf dfs w = do
-    mergedData <- getData dfs
-    case mergedData of
-        Left err -> print err
-        Right jv -> do
-            compileResult <- compileRule jv
-            case compileResult of
-                Left err -> print err
-                Right (CompileSuccess{renderedTemplates=rt}) -> do
-                    let eRule = YAML.decodeEither' $ encodeUtf8 $ value $ NE.head rt
-                    case eRule of
-                        Left err -> print err
-                        Right rule -> do
-                            processRule rule d
-    where
-        compileRule jv = do
-            lazyRf <- readLazy ("/" </> rf) rf
-            pure . compile $ CompileJob jv $ lazyRf:|[]
+processWithData = undefined
+-- processWithData d rf dfs w = do
+--     mergedData <- getData dfs
+--     case mergedData of
+--         Left err -> print err
+--         Right jv -> do
+--             compileResult <- compileRule jv
+--             case compileResult of
+--                 Left err -> print err
+--                 Right (CompileSuccess{renderedTemplates=rt}) -> do
+--                     let eRule = YAML.decodeEither' $ encodeUtf8 $ value $ NE.head rt
+--                     case eRule of
+--                         Left err -> print err
+--                         Right rule -> do
+--                             processRule rule d
+--     where
+--         compileRule jv = do
+--             lazyRf <- readLazy ("/" </> rf) rf
+--             pure . compile $ CompileJob jv $ lazyRf:|[]
 
 processRule :: Rule -> Directory -> IO ()
 processRule r d = do

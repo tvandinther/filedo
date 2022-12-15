@@ -3,7 +3,7 @@ module Actions.Compile (
     CompileJob(..),
     CompileSuccess(..),
     CompileError(..),
-    compile
+    compile,
 ) where
 
 import Data.Text ( Text, pack, unpack )
@@ -26,23 +26,23 @@ import Types.FileScoped ( FileScoped(..) )
 import Data.Bifunctor (Bifunctor(bimap))
 import Data.Either (partitionEithers)
 import Data.Semigroup (Semigroup(sconcat))
-import Data.Set (Set)
+import Data.Set (Set, toList)
+
+-- data CompileJob = CompileJob
+--     { templateData :: JSON.Value
+--     , templates :: NonEmpty LazyFile }
 
 data CompileJob = CompileJob
-    { templateData :: JSON.Value
-    , templates :: NonEmpty LazyFile }
-
-data CompileJob' = CompileJob'
     { templateData' :: JSON.Value
     , templates' :: Set LazyFile }
     deriving (Show)
 
-data CompileSuccess = CompileSuccess 
-    { warnings :: [FileScoped String]
-    , renderedTemplates :: NonEmpty (FileScoped Text) }
-    deriving (Show)
+-- data CompileSuccess = CompileSuccess 
+--     { warnings :: [FileScoped String]
+--     , renderedTemplates :: NonEmpty (FileScoped Text) }
+--     deriving (Show)
 
-newtype CompileSuccess' = CompileSuccess'
+newtype CompileSuccess = CompileSuccess
     { getResult :: LazyFile -> Result }
 
 type Result = ([FileScoped String], FileScoped Text)
@@ -51,26 +51,23 @@ newtype CompileError = CompileError {getMessages :: [FileScoped String]} derivin
 
 type ParseError = ParseErrorBundle Text Void
 
+-- compile :: CompileJob -> Either CompileError CompileSuccess
+-- -- compile (CompileJob _ []) = Right $ CompileSuccess [] []
+-- compile (CompileJob d ts) = bimap mkError mkSuccess doJob
+--     where
+--         mkSuccess r = CompileSuccess (concatMap fst r) (snd <$> r)
+--         mkError es = CompileError $ fmap errorBundlePretty <$> es
+--         doJob = compileMustacheTexts ts >>= \cache -> pure $ renderSingle d cache . (filepathToPName . relativePath) <$> ts
+
 compile :: CompileJob -> Either CompileError CompileSuccess
--- compile (CompileJob _ []) = Right $ CompileSuccess [] []
-compile (CompileJob d ts) = bimap mkError mkSuccess doJob
+compile (CompileJob d ts) = bimap mkError CompileSuccess doJob
     where
-        mkSuccess r = CompileSuccess (concatMap fst r) (snd <$> r)
         mkError es = CompileError $ fmap errorBundlePretty <$> es
-        doJob = compileMustacheTexts ts >>= \cache -> pure $ renderSingle d cache . (filepathToPName . relativePath) <$> ts
+        doJob = compileN d $ toList ts
 
--- compile' :: CompileJob' -> Either CompileError CompileSuccess'
-
--- compile'' :: JSON.Value -> Set LazyFile -> (LazyFile -> Either [FileScoped ParseError] ([FileScoped String], FileScoped Text))
-
-
-compileN :: JSON.Value -> NonEmpty LazyFile -> Either [FileScoped ParseError] (LazyFile -> ([FileScoped String], FileScoped Text))
-compileN d (t:|ts) = compileMustacheTexts (t:|ts) >>= \cache -> pure $ renderSingle d cache . (filepathToPName . relativePath)
-
--- compileSingle :: JSON.Value -> LazyFile -> Either [FileScoped String] (FileScoped Text)
--- compileSingle d t = compileMustacheTexts (t:|[]) >>= bimap (\es -> errorBundlePretty <$> es) (\r -> concatMap fst r) \c -> pure $ renderSingle d c . (filepathToPName . relativePath) $ t
--- compileSingle :: JSON.Value -> LazyFile -> Either [FileScoped String] ([FileScoped String], FileScoped Text)
--- compileSingle d t = bimap (fmap errorBundlePretty) (id) $ NE.head $ compileN d <$> (t:|[])
+compileN :: JSON.Value -> [LazyFile] -> Either [FileScoped ParseError] (LazyFile -> Result)
+compileN _ [] = Right $ const ([], FileScoped "" (pack ""))
+compileN d (t:ts) = compileMustacheTexts (t:|ts) >>= \cache -> pure $ renderSingle d cache . (filepathToPName . relativePath)
 
 renderSingle :: JSON.Value -> Template -> PName -> ([FileScoped String], FileScoped Text)
 renderSingle d cache pname = fileScope $ strict $ renderMustacheW (setActiveTemplate pname) d
