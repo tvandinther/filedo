@@ -1,5 +1,5 @@
 module Options (
-    Opts(..),
+    GlobalOptions(..),
     optsParser
 ) where
 
@@ -9,21 +9,22 @@ import Commands.MergeData
 import Commands.Compile
 import Commands.Process
 
-data Opts = Opts
+data GlobalOptions = GlobalOptions
     { verbose :: Bool
+    , quiet :: Bool
     , optCommand :: Command
     }
 
-programOptions :: Parser Opts
+programOptions :: Parser GlobalOptions
 programOptions =
-    Opts <$> verbosityParser <*>
+    GlobalOptions <$> verbosityParser <*> quietParser <*>
     hsubparser (mergeDataCommand <> compileCommand <> processCommand)
     where
         mergeDataCommand = command "merge-data" $ MergeData <$> mergeDataInfo
         compileCommand = command "compile" $ Compile <$> compileInfo
         processCommand = command "process" $ Process <$> processInfo
 
-optsParser :: ParserInfo Opts
+optsParser :: ParserInfo GlobalOptions
 optsParser =
     info
         (helper <*> versionParser <*> programOptions)
@@ -33,6 +34,9 @@ optsParser =
 
 versionParser :: Parser (a -> a)
 versionParser = infoOption "0.0" (long "version" <> help "Show version" <> hidden)
+
+quietParser :: Parser Bool
+quietParser = switch (long "quiet" <> short 'q' <> help "Enable quiet mode")
 
 verbosityParser :: Parser Bool
 verbosityParser = switch

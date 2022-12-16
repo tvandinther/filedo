@@ -9,14 +9,14 @@ rules: # rule name
     pre: ["echo", "Listing all non-cfn directories", "AWS_PROFILE=$AWS_PROFILE", "AWS_REGION=$AWS_REGION"] # a command to run before the rule
     parallelise: true # run the commands in parallel, default false
     ignoreErrors: true # ignore command errors, default false
-    command: ["echo", "$path"] # a command to run for each target, variables are auto-populated: $path is the path of the target, $name is the name of the target without extensions
+    command: ["echo", "$filepath"] # a command to run for each target, variables are auto-populated: $path is the path of the target, $name is the name of the target without extensions
     post: "echo 'done'" # a command to run after the rule
     environment: # override environment variables for the execution of the rule
       AWS_PROFILE: "{{global.awsProfile}}"
   
     rules:
       - priority: 9999
-        # skip: true
+        skip: true
         targets: 
         - "**/cfn/*.yaml" # targets all yaml files in cfn directories
         pre: ["echo", "AWS_PROFILE=$AWS_PROFILE", "AWS_REGION=$AWS_REGION"]
@@ -24,7 +24,7 @@ rules: # rule name
       
       - targets: # targetes all yaml files
           - "**/*.yaml"
-        # skip: true
+        skip: true
         exclude: # exclude all yaml files in cfn directories
           - "**/cfn/*.yaml"
           - "**/data/*.yaml"

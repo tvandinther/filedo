@@ -1,6 +1,7 @@
 module Types.Command (
     Cmd(..),
     Command(..),
+    printCmd,
     prettyPrintCmd,
     prettyPrintCommand
 ) where
@@ -24,6 +25,10 @@ instance FromJSON Command where
 isEmpty :: Command -> Bool
 isEmpty (Command []) = True
 isEmpty _ = False
+
+printCmd :: Cmd -> String
+printCmd (Unscoped c) = unwords $ unCommand c
+printCmd (Scoped (FileScoped _ c)) = unwords (unCommand c)
 
 prettyPrintCmd :: Cmd -> String
 prettyPrintCmd (Unscoped c) = prettyPrintCommand c

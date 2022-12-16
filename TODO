@@ -1,5 +1,4 @@
-TODO: Add support for in-process compilation for the process command
-
+TODO: Use System.Command for command line interfacing
 TODO: Add support for environment variables
 TODO: Add support for parallelisation
 TODO: Add support for stdin

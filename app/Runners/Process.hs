@@ -8,32 +8,32 @@ import Types (Directory(..), DataFileType (JSON))
 import Data.Yaml (prettyPrintParseException)
 import Actions.Process (process, ProcessJob(..), ProcessSuccess(..), ProcessError(..))
 import System.Directory.Extra (listDirectories, listFiles)
-import Types.Command (prettyPrintCmd)
+import Types.Command (prettyPrintCmd, printCmd, Cmd (..), Command (..))
 import Control.Monad.Extra (concatMapM)
 import System.FilePath (addTrailingPathSeparator, takeFileName, (</>))
-import Runners.Compile (createJob, runCompile', getData)
+import Runners.Compile (createJob, runCompile', getData, printWarnings)
 import Commands.Compile (CompileOptions(..))
 import Actions.Compile (CompileSuccess(..), CompileJob (..), compile, CompileError)
 import Types.LazyFile (readLazy, LazyFile (..))
 import Types.FileScoped (FileScoped(..), findFile)
 import Data.Text.Encoding (encodeUtf8)
 import Types.Rule (Rule)
-import Data.List.NonEmpty as NE ( NonEmpty((:|)), head )
-import qualified Data.Aeson as JSON
 import qualified Data.Set as Set
+import System.Process.Extra (system)
+import Options (GlobalOptions (quiet))
+import qualified Control.Monad
 
-runProcess :: ProcessOptions -> IO ()
-runProcess (ProcessOptions d rf _ [] w) = do
+runProcess :: GlobalOptions -> ProcessOptions -> IO ()
+runProcess globalOpts (ProcessOptions d rf _ [] w dry) = do
     rootRule <- YAML.decodeFileEither rf
     case rootRule of
         Left err -> putStrLn $ prettyPrintParseException err
         Right rule -> do
-            processRule rule d
-runProcess (ProcessOptions d rf _ dfs w) = processWithData d rf dfs w
+            processRule rule d dry (quiet globalOpts)
+runProcess globalOpts (ProcessOptions d rf _ dfs w dry) = processWithData d rf dfs w dry (quiet globalOpts)
 
-processWithData :: Directory -> FilePath -> [FilePath] -> Bool -> IO ()
--- processWithData = undefined
-processWithData d rf dfs w = do
+processWithData :: Directory -> FilePath -> [FilePath] -> Bool -> DryRun -> Quiet -> IO ()
+processWithData d rf dfs w dry q = do
     mergedData <- getData dfs
     case mergedData of
         Left err -> print err
@@ -43,16 +43,22 @@ processWithData d rf dfs w = do
             case compile job of
                 Left err -> print err
                 Right s -> do
-                    let eRule = compiledRule lazyRf s
+                    eRule <- compiledRule lazyRf s
                     case eRule of
                         Left err -> print err
                         Right rule -> do
-                            processRule rule d
+                            processRule rule d dry q
     where
-        compiledRule lf (CompileSuccess get) = YAML.decodeEither' $ encodeUtf8 $ value $ snd $ get lf
+        compiledRule lf (CompileSuccess get) = do
+            let (warnings, template) = get lf
+            Control.Monad.unless q $ printWarnings w warnings
+            pure . YAML.decodeEither' . encodeUtf8 . value $ template
 
-processRule :: Rule -> Directory -> IO ()
-processRule r d = do
+type DryRun = Bool
+type Quiet = Bool
+
+processRule :: Rule -> Directory -> DryRun -> Quiet -> IO ()
+processRule r d True _ = do
     allTargets <- listAllRecursive $ unDirectory d
     let res = process $ ProcessJob "" r allTargets
     case res of
@@ -60,6 +66,27 @@ processRule r d = do
         Right cs -> putStrLn $ unlines $ numberedLines $ prettyPrintCmd <$> cmds cs
     where
         numberedLines = Prelude.zipWith (\n s -> show n ++ "| " ++ s) [(1::Int)..]
+processRule r d False q = do
+    allTargets <- listAllRecursive $ unDirectory d
+    let res = process $ ProcessJob "" r allTargets
+    case res of
+        Left err -> putStrLn $ getMessage err
+        Right cs -> do
+            mapM_ (runCmd q) $ cmds cs
+    where
+        runCmd True cmd = do
+            runCommand cmd
+        runCmd False cmd = do
+            putStrLn $ "Running: " ++ printCmd cmd
+            runCommand cmd
+
+runCommand :: Cmd -> IO ()
+runCommand (Unscoped (Command c)) = do
+    _ <- system $ unwords c
+    pure ()
+runCommand (Scoped (FileScoped p (Command c))) = do
+    _ <- system $ "export filepath=" ++ p ++ "; " ++ unwords c
+    pure ()
 
 listDirectoriesRecursive :: FilePath -> IO [FilePath]
 listDirectoriesRecursive path = concatMapM listDirectoriesRecursive =<< listDirectories path

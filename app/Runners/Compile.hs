@@ -2,7 +2,8 @@ module Runners.Compile (
     runCompile,
     runCompile',
     createJob,
-    getData
+    getData,
+    printWarnings
 ) where
 
 import Commands.Compile ( CompileOptions(..) )

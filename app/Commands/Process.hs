@@ -13,7 +13,8 @@ data ProcessOptions = ProcessOptions
     , ruleFile :: FilePath
     , compileTemplates :: Bool
     , dataFiles :: [FilePath]
-    , suppressWarnings :: Bool }
+    , suppressWarnings :: Bool
+    , dryRun :: Bool }
 
 processInfo :: ParserInfo ProcessOptions
 processInfo = info processOptions (progDesc "Process filedo rules")
@@ -26,6 +27,7 @@ processOptions =
     <*> compileTemplatesFlag
     <*> dataFilesOption
     <*> suppressWarningsFlag
+    <*> dryRunFlag
 
 targetDirectoryArgument :: Parser Directory
 targetDirectoryArgument = argument directory 
@@ -46,3 +48,8 @@ compileTemplatesFlag = switch
     ( long "compile"
     <> short 'c'
     <> help "Compile mustache templates before processing." )
+
+dryRunFlag :: Parser Bool
+dryRunFlag = switch
+    ( long "dry-run"
+    <> help "Run through the process without actually performing any actions." )
