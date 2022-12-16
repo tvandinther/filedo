@@ -20,6 +20,7 @@ import Data.Text.Encoding (encodeUtf8)
 import Types.Rule (Rule)
 import Data.List.NonEmpty as NE ( NonEmpty((:|)), head )
 import qualified Data.Aeson as JSON
+import qualified Data.Set as Set
 
 runProcess :: ProcessOptions -> IO ()
 runProcess (ProcessOptions d rf _ [] w) = do
@@ -31,25 +32,24 @@ runProcess (ProcessOptions d rf _ [] w) = do
 runProcess (ProcessOptions d rf _ dfs w) = processWithData d rf dfs w
 
 processWithData :: Directory -> FilePath -> [FilePath] -> Bool -> IO ()
-processWithData = undefined
--- processWithData d rf dfs w = do
---     mergedData <- getData dfs
---     case mergedData of
---         Left err -> print err
---         Right jv -> do
---             compileResult <- compileRule jv
---             case compileResult of
---                 Left err -> print err
---                 Right (CompileSuccess{renderedTemplates=rt}) -> do
---                     let eRule = YAML.decodeEither' $ encodeUtf8 $ value $ NE.head rt
---                     case eRule of
---                         Left err -> print err
---                         Right rule -> do
---                             processRule rule d
---     where
---         compileRule jv = do
---             lazyRf <- readLazy ("/" </> rf) rf
---             pure . compile $ CompileJob jv $ lazyRf:|[]
+-- processWithData = undefined
+processWithData d rf dfs w = do
+    mergedData <- getData dfs
+    case mergedData of
+        Left err -> print err
+        Right jv -> do
+            lazyRf <- readLazy ("/" </> rf) rf
+            let job = CompileJob jv $ Set.singleton lazyRf
+            case compile job of
+                Left err -> print err
+                Right s -> do
+                    let eRule = compiledRule lazyRf s
+                    case eRule of
+                        Left err -> print err
+                        Right rule -> do
+                            processRule rule d
+    where
+        compiledRule lf (CompileSuccess get) = YAML.decodeEither' $ encodeUtf8 $ value $ snd $ get lf
 
 processRule :: Rule -> Directory -> IO ()
 processRule r d = do

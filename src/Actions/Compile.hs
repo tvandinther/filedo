@@ -3,6 +3,7 @@ module Actions.Compile (
     CompileJob(..),
     CompileSuccess(..),
     CompileError(..),
+    CompileResult,
     compile,
 ) where
 
@@ -27,47 +28,28 @@ import Data.Bifunctor (Bifunctor(bimap))
 import Data.Either (partitionEithers)
 import Data.Semigroup (Semigroup(sconcat))
 import Data.Set (Set, toList)
-
--- data CompileJob = CompileJob
---     { templateData :: JSON.Value
---     , templates :: NonEmpty LazyFile }
+import qualified Data.Set as Set
 
 data CompileJob = CompileJob
     { templateData' :: JSON.Value
     , templates' :: Set LazyFile }
     deriving (Show)
 
--- data CompileSuccess = CompileSuccess 
---     { warnings :: [FileScoped String]
---     , renderedTemplates :: NonEmpty (FileScoped Text) }
---     deriving (Show)
-
 newtype CompileSuccess = CompileSuccess
-    { getResult :: LazyFile -> Result }
+    { getResult :: LazyFile -> CompileResult }
 
-type Result = ([FileScoped String], FileScoped Text)
+type CompileResult = ([FileScoped String], FileScoped Text)
 
 newtype CompileError = CompileError {getMessages :: [FileScoped String]} deriving (Show)
 
 type ParseError = ParseErrorBundle Text Void
 
--- compile :: CompileJob -> Either CompileError CompileSuccess
--- -- compile (CompileJob _ []) = Right $ CompileSuccess [] []
--- compile (CompileJob d ts) = bimap mkError mkSuccess doJob
---     where
---         mkSuccess r = CompileSuccess (concatMap fst r) (snd <$> r)
---         mkError es = CompileError $ fmap errorBundlePretty <$> es
---         doJob = compileMustacheTexts ts >>= \cache -> pure $ renderSingle d cache . (filepathToPName . relativePath) <$> ts
-
 compile :: CompileJob -> Either CompileError CompileSuccess
-compile (CompileJob d ts) = bimap mkError CompileSuccess doJob
+compile (CompileJob d templates) = bimap mkError CompileSuccess (doJob $ Set.toList templates)
     where
         mkError es = CompileError $ fmap errorBundlePretty <$> es
-        doJob = compileN d $ toList ts
-
-compileN :: JSON.Value -> [LazyFile] -> Either [FileScoped ParseError] (LazyFile -> Result)
-compileN _ [] = Right $ const ([], FileScoped "" (pack ""))
-compileN d (t:ts) = compileMustacheTexts (t:|ts) >>= \cache -> pure $ renderSingle d cache . (filepathToPName . relativePath)
+        doJob [] = Right $ const ([], FileScoped "" (pack ""))
+        doJob (t:ts) = compileMustacheTexts (t:|ts) >>= \cache -> pure $ renderSingle d cache . (filepathToPName . relativePath)
 
 renderSingle :: JSON.Value -> Template -> PName -> ([FileScoped String], FileScoped Text)
 renderSingle d cache pname = fileScope $ strict $ renderMustacheW (setActiveTemplate pname) d
