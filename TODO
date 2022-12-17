@@ -1,3 +1,4 @@
+TODO: Use Writer monad for logging
 TODO: Use System.Command for command line interfacing
 TODO: Add support for environment variables
 TODO: Add support for parallelisation

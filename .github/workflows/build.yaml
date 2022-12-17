@@ -1,0 +1,19 @@
+name: build
+on:
+  push:
+    branches:
+      - add-github-actions
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: freckle/stack-action@v3
+        with:
+          stack-version: 2.9.1
+          stack-args: --copy-bins
+      - uses: actions/upload-artifact@v2
+        with:
+          name: filedo
+          path: ${{ steps.stack.outputs.local-bin-path }}/filedo-exe
