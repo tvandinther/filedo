@@ -12,13 +12,13 @@ import Actions.MergeData (MergeDataError (errorMessage), mergeData')
 import Commands.Compile (CompileOptions (..))
 import Control.Arrow (ArrowChoice (left))
 import Control.Monad.Trans.Maybe (MaybeT (..), runMaybeT)
-import qualified Data.Aeson as JSON
-import qualified Data.ByteString as BS
-import qualified Data.Set as Data
-import qualified Data.Set as Set
-import qualified Data.Text as T
-import qualified Data.Text.IO as TIO
-import qualified Data.Yaml as Yaml
+import Data.Aeson qualified as JSON
+import Data.ByteString qualified as BS
+import Data.Set qualified as Data
+import Data.Set qualified as Set
+import Data.Text qualified as T
+import Data.Text.IO qualified as TIO
+import Data.Yaml qualified as Yaml
 import Data.Yaml.Aeson (prettyPrintParseException)
 import Runners.MergeData (sendJob)
 import System.Directory.Extra (createDirectoryIfMissing, listFilesRecursive)

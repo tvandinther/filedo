@@ -11,7 +11,7 @@ import Actions.MergeData
     mergeData,
   )
 import Commands.MergeData (MergeDataOptions (..))
-import qualified Data.Text.IO as TIO
+import Data.Text.IO qualified as TIO
 import Types (DataFileType)
 
 runMergeData :: MergeDataOptions -> IO ()

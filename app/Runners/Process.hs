@@ -6,12 +6,12 @@ where
 import Actions.Compile (CompileJob (..), CompileSuccess (..), compile)
 import Actions.Process (ProcessError (..), ProcessJob (..), ProcessSuccess (..), process)
 import Commands.Process (ProcessOptions (..))
-import qualified Control.Monad
+import Control.Monad qualified
 import Control.Monad.Extra (concatMapM)
-import qualified Data.Set as Set
+import Data.Set qualified as Set
 import Data.Text.Encoding (encodeUtf8)
 import Data.Yaml (prettyPrintParseException)
-import qualified Data.Yaml as YAML
+import Data.Yaml qualified as YAML
 import Options (GlobalOptions (quiet))
 import Runners.Compile (getData, printWarnings)
 import System.Directory.Extra (listDirectories, listFiles)
