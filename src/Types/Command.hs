@@ -1,30 +1,27 @@
-module Types.Command (
-    Cmd(..),
-    Command(..),
+module Types.Command
+  ( Cmd (..),
+    Command (..),
     printCmd,
     prettyPrintCmd,
-    prettyPrintCommand
-) where
+    prettyPrintCommand,
+  )
+where
 
+import qualified Data.Text as T
+import Data.Vector (toList)
 import Data.Yaml (FromJSON)
 import qualified Data.Yaml as YAML
-import qualified Data.Text as T
-import Data.Vector ( toList )
-import Types.FileScoped (FileScoped(..))
+import Types.FileScoped (FileScoped (..))
 
 data Cmd = Unscoped Command | Scoped (FileScoped Command) deriving (Show)
 
-newtype Command = Command { unCommand :: [String] }
-    deriving (Show)
+newtype Command = Command {unCommand :: [String]}
+  deriving (Show)
 
 instance FromJSON Command where
-    parseJSON (YAML.String s) = return $ Command [T.unpack s]
-    parseJSON (YAML.Array xs) = Command <$> Prelude.mapM YAML.parseJSON (toList xs)
-    parseJSON _ = fail "Command must be a string or an array of strings"
-
-isEmpty :: Command -> Bool
-isEmpty (Command []) = True
-isEmpty _ = False
+  parseJSON (YAML.String s) = return $ Command [T.unpack s]
+  parseJSON (YAML.Array xs) = Command <$> Prelude.mapM YAML.parseJSON (toList xs)
+  parseJSON _ = fail "Command must be a string or an array of strings"
 
 printCmd :: Cmd -> String
 printCmd (Unscoped c) = unwords $ unCommand c

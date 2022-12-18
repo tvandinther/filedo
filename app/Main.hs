@@ -1,20 +1,18 @@
 module Main (main) where
 
-import Options.Applicative ( execParser )
-import Commands( Command(..) )
-import Options ( GlobalOptions(..), optsParser )
-import Runners.MergeData (runMergeData)
+import Commands (Command (..))
+import Options (GlobalOptions (..), optsParser)
+import Options.Applicative (execParser)
 import Runners.Compile (runCompile)
+import Runners.MergeData (runMergeData)
 import Runners.Process (runProcess)
-
 
 main :: IO ()
 main = do
-    opts <- execParser optsParser
-    run opts (optCommand opts)
-    -- putStrLn ("verbose: " ++ show (verbose opts))
+  opts <- execParser optsParser
+  run opts (optCommand opts)
 
 run :: GlobalOptions -> Command -> IO ()
-run g (MergeData o) = runMergeData o
-run g (Compile o) = runCompile o
+run _ (MergeData o) = runMergeData o
+run _ (Compile o) = runCompile o
 run g (Process o) = runProcess g o
