@@ -35,16 +35,16 @@ processRule fps r = processRule' fps (targets r) r
 
 processRule' :: [FilePath] -> [GlobPattern] -> Rule -> [Cmd]
 processRule' _ _ (Rule {skip = True}) = []
-processRule' fs rootPatterns rule =
+processRule' fs rootPatterns r =
   allCommands
     ++ concatMap
       (processRule' fs newRoots)
-      (prioritisedSubrules rule)
+      (prioritisedSubrules r)
   where
-    prioritisedSubrules r = sortOn (Down . priority) $ rules r
-    newRoots = cartesianConcatGlobs rootPatterns (targets rule)
-    allCommands = addPreHook rule $ addPostHook rule $ Scoped <$> expandedCommands
-    expandedCommands = expandCommand rootPatterns fs rule
+    prioritisedSubrules r' = sortOn (Down . priority) $ rules r'
+    newRoots = cartesianConcatGlobs rootPatterns (targets r)
+    allCommands = addPreHook r $ addPostHook r $ Scoped <$> expandedCommands
+    expandedCommands = expandCommand rootPatterns fs r
 
 addPreHook :: Rule -> [Cmd] -> [Cmd]
 addPreHook (Rule {pre = Command []}) = id
@@ -57,9 +57,9 @@ addPostHook (Rule {post = hook}) = flip (++) [Unscoped hook]
 expandCommand :: [GlobPattern] -> [FilePath] -> Rule -> [FileScoped Command]
 expandCommand _ _ (Rule {command = Command []}) = []
 expandCommand rootPatterns fs (Rule {command = cmd, targets = tInclude, exclude = tExclude}) =
-  flip FileScoped cmd <$> files
+  flip FileScoped cmd <$> filteredFiles
   where
-    files = filter (\fp -> isIncludedFile fp && not (isExcludedFile fp)) fs
+    filteredFiles = filter (\fp -> isIncludedFile fp && not (isExcludedFile fp)) fs
     isIncludedFile fp = any (`match` fp) (cartesianConcatGlobs rootPatterns tInclude)
     isExcludedFile fp = any (`match` fp) (cartesianConcatGlobs rootPatterns tExclude)
 

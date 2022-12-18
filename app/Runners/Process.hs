@@ -28,8 +28,8 @@ runProcess globalOpts (ProcessOptions d rf _ [] _ dry) = do
   rootRule <- YAML.decodeFileEither rf
   case rootRule of
     Left err -> putStrLn $ prettyPrintParseException err
-    Right rule -> do
-      processRule rule d dry (quiet globalOpts)
+    Right r -> do
+      processRule r d dry (quiet globalOpts)
 runProcess globalOpts (ProcessOptions d rf _ dfs w dry) = processWithData d rf dfs w dry (quiet globalOpts)
 
 processWithData :: Directory -> FilePath -> [FilePath] -> Bool -> DryRun -> Quiet -> IO ()
@@ -46,8 +46,8 @@ processWithData d rf dfs w dry q = do
           eRule <- compiledRule lazyRf s
           case eRule of
             Left err -> print err
-            Right rule -> do
-              processRule rule d dry q
+            Right r -> do
+              processRule r d dry q
   where
     compiledRule lf (CompileSuccess get) = do
       let (warnings, template) = get lf
@@ -91,7 +91,7 @@ runCommand (Scoped (FileScoped p (Command c))) = do
 
 listAllRecursive :: FilePath -> IO [FilePath]
 listAllRecursive path = do
-  files <- listFiles path
-  dirs <- listDirectories path
-  rest <- concatMapM listAllRecursive dirs
-  return $ files ++ (addTrailingPathSeparator <$> dirs) ++ rest
+  fs <- listFiles path
+  ds <- listDirectories path
+  rest <- concatMapM listAllRecursive ds
+  return $ fs ++ (addTrailingPathSeparator <$> ds) ++ rest
