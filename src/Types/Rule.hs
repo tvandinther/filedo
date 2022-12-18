@@ -10,9 +10,9 @@ where
 
 import Data.Aeson ((.!=), (.:?))
 import Data.Map (Map)
-import qualified Data.Text as T
+import Data.Text qualified as T
 import Data.Yaml (FromJSON)
-import qualified Data.Yaml as YAML
+import Data.Yaml qualified as YAML
 import System.FilePath.Glob (Pattern, compile)
 import Types.Command (Command (..))
 
@@ -20,7 +20,6 @@ type GlobPattern = Pattern
 
 instance FromJSON Pattern where
   parseJSON (YAML.String s) = return $ compile (T.unpack s)
-  -- parseJSON (YAML.Array xs) = compile <$> Prelude.mapM YAML.parseJSON (Data.Vector.toList xs)
   parseJSON _ = fail "Glob pattern must be a string"
 
 data Rule = Rule

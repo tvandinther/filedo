@@ -7,15 +7,15 @@ module Actions.Compile
   )
 where
 
-import qualified Control.Arrow
-import qualified Data.Aeson.Types as JSON
+import Control.Arrow qualified
+import Data.Aeson.Types qualified as JSON
 import Data.Bifunctor (Bifunctor (bimap))
 import Data.ByteString (toStrict)
 import Data.Either (partitionEithers)
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Semigroup (Semigroup (sconcat))
 import Data.Set (Set)
-import qualified Data.Set as Set
+import Data.Set qualified as Set
 import Data.Text (Text, pack, unpack)
 import Data.Text.Encoding (decodeUtf8)
 import Data.Text.Lazy (toStrict)

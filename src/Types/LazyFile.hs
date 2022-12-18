@@ -6,7 +6,7 @@ module Types.LazyFile
 where
 
 import Data.ByteString.Lazy (ByteString)
-import qualified Data.ByteString.Lazy as BSL
+import Data.ByteString.Lazy qualified as BSL
 import Data.Functor ((<&>))
 import System.FilePath (makeRelative)
 

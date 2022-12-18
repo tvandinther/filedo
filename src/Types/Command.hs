@@ -7,10 +7,10 @@ module Types.Command
   )
 where
 
-import qualified Data.Text as T
+import Data.Text qualified as T
 import Data.Vector (toList)
 import Data.Yaml (FromJSON)
-import qualified Data.Yaml as YAML
+import Data.Yaml qualified as YAML
 import Types.FileScoped (FileScoped (..))
 
 data Cmd = Unscoped Command | Scoped (FileScoped Command) deriving (Show)

@@ -7,15 +7,15 @@ module Actions.MergeData
   )
 where
 
-import qualified Control.Arrow
-import qualified Data.Aeson as JSON
+import Control.Arrow qualified
+import Data.Aeson qualified as JSON
 import Data.Aeson.KeyMap (unionWith)
 import Data.Bifunctor (Bifunctor (bimap))
 import Data.ByteString.Lazy (toStrict)
 import Data.List (foldl1')
 import Data.Text (Text)
 import Data.Text.Encoding (decodeUtf8, encodeUtf8)
-import qualified Data.Yaml as YAML
+import Data.Yaml qualified as YAML
 import Types (DataFileType (..))
 
 data MergeDataJob = MergeDataJob
