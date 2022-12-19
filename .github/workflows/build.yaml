@@ -1,19 +1,77 @@
 name: build
 on:
+  workflow_dispatch:
   push:
     branches:
       - add-github-actions
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    name: ${{ matrix.os }} build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
     steps:
       - uses: actions/checkout@v3
-      - uses: freckle/stack-action@v3
+      
+      - uses: haskell/actions/setup@v1
         with:
+          ghc-version: 9.2.4
           stack-version: 2.9.1
-          stack-args: --copy-bins
+
+      - if: matrix.os != 'windows-latest'
+        uses: actions/cache@v3
+        name: Cache ~/.stack
+        with:
+          path: ~/.stack
+          key: ${{ runner.os }}-stack-global-${{ hashFiles('stack.yaml') }}-${{ hashFiles('package.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-stack-global-
+      - if: matrix.os != 'windows-latest'
+        uses: actions/cache@v3
+        name: Cache .stack-work
+        with:
+          path: .stack-work
+          key: ${{ runner.os }}-stack-work-${{ hashFiles('stack.yaml') }}-${{ hashFiles('package.yaml') }}-${{ hashFiles('**/*.hs') }}
+          restore-keys: |
+            ${{ runner.os }}-stack-work-
+
+      - if: matrix.os == 'windows-latest'
+        uses: actions/cache@v3
+        name: Cache %APPDATA%\stack %LOCALAPPDATA%\Programs\stack
+        with:
+          path: |
+            ~\AppData\Roaming\stack
+            ~\AppData\Local\Programs\stack    
+          key: ${{ runner.os }}-stack-global-${{ hashFiles('stack.yaml') }}-${{ hashFiles('package.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-stack-global-
+      - if: matrix.os == 'windows-latest'
+        uses: actions/cache@v3
+        name: Cache .stack-work
+        with:
+          path: .stack-work
+          key: ${{ runner.os }}-stack-work-${{ hashFiles('stack.yaml') }}-${{ hashFiles('package.yaml') }}-${{ hashFiles('**/*.hs') }}
+          restore-keys: |
+            ${{ runner.os }}-stack-work-
+
+      - name: Install Dependencies
+        run: |
+          stack build --system-ghc --test --bench --no-run-tests --no-run-benchmarks --only-dependencies
+
+      - name: Build
+        id: build
+        run: |
+          stack build --system-ghc --test --bench --no-run-tests --no-run-benchmarks --copy-bins
+
+      # - uses: freckle/stack-action@v3
+      #   with:
+      #     stack-version: 2.9.1
+          # stack-args: --copy-bins
+      
       - uses: actions/upload-artifact@v2
         with:
           name: filedo
-          path: ${{ steps.stack.outputs.local-bin-path }}/filedo-exe
+          path: ${{ steps.build.outputs.local-bin-path }}/filedo

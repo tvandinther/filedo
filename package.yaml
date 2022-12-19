@@ -52,7 +52,7 @@ library:
   - ImportQualifiedPost
 
 executables:
-  filedo-exe:
+  filedo:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
