@@ -77,22 +77,22 @@ jobs:
           mkdir -p dist
           tar -czf dist/filedo-${{ runner.os }}-${{ runner.arch }}.tar.gz -C ~/.local/bin filedo
 
-      # - if: matrix.os == 'windows-latest'
-      #   name: Create zip
-      #   run: |
-      #     mkdir -p dist
-      #     7z a -tzip dist/filedo-${{ runner.os }}-${{ runner.arch }}.zip "%AppData%\local\bin\filedo.exe"
+      - if: matrix.os == 'windows-latest'
+        name: Create zip
+        run: |
+          mkdir -p dist
+          7z a -tzip dist/filedo-${{ runner.os }}-${{ runner.arch }}.zip C:\Users\runneradmin\AppData\Roaming\local\bin\filedo.exe
 
       - if: matrix.os != 'windows-latest'
         uses: actions/upload-artifact@v3
         with:
-          name: filedo-${{ runner.os }}-${{ runner.arch }}.tar.gz
+          name: ${{ github.ref }}-builds
           path: dist/filedo-${{ runner.os }}-${{ runner.arch }}.tar.gz
           if-no-files-found: error
 
-      # - if: matrix.os == 'windows-latest'
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: filedo-${{ runner.os }}-${{ runner.arch }}.zip
-      #     path: dist/filedo-${{ runner.os }}-${{ runner.arch }}.zip
-      #     if-no-files-found: error
+      - if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ github.ref }}-builds
+          path: dist/filedo-${{ runner.os }}-${{ runner.arch }}.zip
+          if-no-files-found: error
