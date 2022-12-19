@@ -11,7 +11,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest] #, macos-latest, windows-latest]
 
     steps:
       - uses: actions/checkout@v3
@@ -71,7 +71,18 @@ jobs:
       #     stack-version: 2.9.1
           # stack-args: --copy-bins
       
+      - run: echo ${{ steps.build.outputs.local-bin-path }}}
+
+      - run: ls ${{ steps.build.outputs.local-bin-path }}
+
+      # tarball
+      - name: Create tarball
+        run: |
+          mkdir -p dist
+          tar -czf dist/filedo-${{ runner.os }}.tar.gz -C ${{ steps.build.outputs.local-bin-path }} filedo
+
       - uses: actions/upload-artifact@v2
         with:
-          name: filedo
-          path: ${{ steps.build.outputs.local-bin-path }}/filedo
+          name: filedo-${{ runner.os }}.tar.gz
+          path: dist/filedo-${{ runner.os }}.tar.gz
+          if-no-files-found: error
