@@ -69,13 +69,28 @@ jobs:
         run: |
           stack build --system-ghc --test --bench --no-run-tests --no-run-benchmarks --copy-bins
 
-      - name: Create tarball
+      - if: matrix.os != 'windows-latest'
+        name: Create tarball
         run: |
           mkdir -p dist
           tar -czf dist/filedo-${{ runner.os }}.tar.gz -C ~/.local/bin filedo
 
-      - uses: actions/upload-artifact@v3
+      - if: matrix.os == 'windows-latest'
+        name: Create zip
+        run: |
+          mkdir -p dist
+          zip -j dist/filedo-${{ runner.os }}.zip %AppData%\local\bin\filedo.exe
+
+      - if: matrix.os != 'windows-latest'
+        uses: actions/upload-artifact@v3
         with:
           name: filedo-${{ runner.os }}.tar.gz
           path: dist/filedo-${{ runner.os }}.tar.gz
+          if-no-files-found: error
+
+      - if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v3
+        with:
+          name: filedo-${{ runner.os }}.zip
+          path: dist/filedo-${{ runner.os }}.zip
           if-no-files-found: error
