@@ -79,7 +79,7 @@ jobs:
         name: Create zip
         run: |
           mkdir -p dist
-          zip -j dist/filedo-${{ runner.os }}.zip %AppData%\local\bin\filedo.exe
+          7z a -tzip dist/filedo-${{ runner.os }}.zip "%AppData%\local\bin\filedo.exe"
 
       - if: matrix.os != 'windows-latest'
         uses: actions/upload-artifact@v3

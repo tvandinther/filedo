@@ -8,7 +8,9 @@ import Commands
 import Commands.Compile
 import Commands.MergeData
 import Commands.Process
+import Data.Version (showVersion)
 import Options.Applicative
+import Paths_filedo
 
 data GlobalOptions = GlobalOptions
   { verbose :: Bool,
@@ -38,7 +40,7 @@ optsParser =
     )
 
 versionParser :: Parser (a -> a)
-versionParser = infoOption "0.0" (long "version" <> help "Show version" <> hidden)
+versionParser = infoOption (showVersion version) (long "version" <> help "Show version" <> hidden)
 
 quietParser :: Parser Bool
 quietParser = switch (long "quiet" <> short 'q' <> help "Enable quiet mode")
