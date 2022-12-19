@@ -4,6 +4,8 @@ on:
     - cron: '0 0 * * 0'
   workflow_dispatch:
   push:
+    tags:
+      - '*.*.*'
     branches:
       - add-github-actions
 
@@ -73,24 +75,24 @@ jobs:
         name: Create tarball
         run: |
           mkdir -p dist
-          tar -czf dist/filedo-${{ runner.os }}.tar.gz -C ~/.local/bin filedo
+          tar -czf dist/filedo-${{ runner.os }}-${{ runner.arch }}.tar.gz -C ~/.local/bin filedo
 
-      - if: matrix.os == 'windows-latest'
-        name: Create zip
-        run: |
-          mkdir -p dist
-          7z a -tzip dist/filedo-${{ runner.os }}.zip "%AppData%\local\bin\filedo.exe"
+      # - if: matrix.os == 'windows-latest'
+      #   name: Create zip
+      #   run: |
+      #     mkdir -p dist
+      #     7z a -tzip dist/filedo-${{ runner.os }}-${{ runner.arch }}.zip "%AppData%\local\bin\filedo.exe"
 
       - if: matrix.os != 'windows-latest'
         uses: actions/upload-artifact@v3
         with:
-          name: filedo-${{ runner.os }}.tar.gz
-          path: dist/filedo-${{ runner.os }}.tar.gz
+          name: filedo-${{ runner.os }}-${{ runner.arch }}.tar.gz
+          path: dist/filedo-${{ runner.os }}-${{ runner.arch }}.tar.gz
           if-no-files-found: error
 
-      - if: matrix.os == 'windows-latest'
-        uses: actions/upload-artifact@v3
-        with:
-          name: filedo-${{ runner.os }}.zip
-          path: dist/filedo-${{ runner.os }}.zip
-          if-no-files-found: error
+      # - if: matrix.os == 'windows-latest'
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: filedo-${{ runner.os }}-${{ runner.arch }}.zip
+      #     path: dist/filedo-${{ runner.os }}-${{ runner.arch }}.zip
+      #     if-no-files-found: error
