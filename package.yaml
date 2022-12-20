@@ -1,5 +1,5 @@
 name:                filedo
-version:             0.1.0.0
+version:             0.1.0
 github:              "githubuser/filedo"
 license:             BSD3
 author:              "Author name here"
@@ -48,9 +48,11 @@ ghc-options:
 
 library:
   source-dirs: src
+  default-extensions:
+  - ImportQualifiedPost
 
 executables:
-  filedo-exe:
+  filedo:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
@@ -59,6 +61,8 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - filedo
+    default-extensions:
+    - ImportQualifiedPost
 
 tests:
   filedo-test:
@@ -70,3 +74,5 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - filedo
+    default-extensions:
+    - ImportQualifiedPost
