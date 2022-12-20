@@ -1,0 +1,110 @@
+name: build
+on:
+  schedule:
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: verify version matches tag
+        run: |
+          if [[ $GITHUB_REF != refs/tags/v$(grep '^version:' filedo.cabal | awk '{print $2}') ]]; then
+            echo "tag must match version in package.yaml"
+            exit 1
+          fi
+  
+  build:
+    name: ${{ matrix.os }} build
+    needs: verify
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest] #, macos-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: haskell/actions/setup@v2
+        with:
+          ghc-version: 9.2.4
+          enable-stack: true
+          stack-version: 2.9.1
+
+      - if: matrix.os != 'windows-latest'
+        uses: actions/cache@v3
+        name: Cache ~/.stack
+        with:
+          path: ~/.stack
+          key: ${{ runner.os }}-stack-global-${{ hashFiles('stack.yaml') }}-${{ hashFiles('package.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-stack-global-
+      - if: matrix.os != 'windows-latest'
+        uses: actions/cache@v3
+        name: Cache .stack-work
+        with:
+          path: .stack-work
+          key: ${{ runner.os }}-stack-work-${{ hashFiles('stack.yaml') }}-${{ hashFiles('package.yaml') }}-${{ hashFiles('**/*.hs') }}
+          restore-keys: |
+            ${{ runner.os }}-stack-work-
+
+      - if: matrix.os == 'windows-latest'
+        uses: actions/cache@v3
+        name: Cache %APPDATA%\stack %LOCALAPPDATA%\Programs\stack
+        with:
+          path: |
+            ~\AppData\Roaming\stack
+            ~\AppData\Local\Programs\stack    
+          key: ${{ runner.os }}-stack-global-${{ hashFiles('stack.yaml') }}-${{ hashFiles('package.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-stack-global-
+      - if: matrix.os == 'windows-latest'
+        uses: actions/cache@v3
+        name: Cache .stack-work
+        with:
+          path: .stack-work
+          key: ${{ runner.os }}-stack-work-${{ hashFiles('stack.yaml') }}-${{ hashFiles('package.yaml') }}-${{ hashFiles('**/*.hs') }}
+          restore-keys: |
+            ${{ runner.os }}-stack-work-
+
+      - name: Install Dependencies
+        run: |
+          stack build --system-ghc --test --bench --no-run-tests --no-run-benchmarks --only-dependencies
+
+      - name: Build
+        id: build
+        run: |
+          stack build --system-ghc --test --bench --no-run-tests --no-run-benchmarks --copy-bins
+
+      - if: matrix.os != 'windows-latest'
+        name: Create tarball
+        run: |
+          mkdir -p dist
+          tar -czf dist/filedo-${{ runner.os }}-${{ runner.arch }}.tar.gz -C ~/.local/bin filedo
+
+      - if: matrix.os == 'windows-latest'
+        name: Create zip
+        run: |
+          mkdir -p dist
+          7z a -tzip dist/filedo-${{ runner.os }}-${{ runner.arch }}.zip C:\Users\runneradmin\AppData\Roaming\local\bin\filedo.exe
+
+      - if: matrix.os != 'windows-latest'
+        uses: actions/upload-artifact@v3
+        with:
+          name: latest-builds
+          path: dist/filedo-${{ runner.os }}-${{ runner.arch }}.tar.gz
+          if-no-files-found: error
+
+      - if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v3
+        with:
+          name: latest-builds
+          path: dist/filedo-${{ runner.os }}-${{ runner.arch }}.zip
+          if-no-files-found: error

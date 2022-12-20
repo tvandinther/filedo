@@ -1,19 +1,21 @@
-module Types.LazyFile (
-    LazyFile(..),
+module Types.LazyFile
+  ( LazyFile (..),
     readLazy,
-    mkLazyFile
-) where
+    mkLazyFile,
+  )
+where
 
 import Data.ByteString.Lazy (ByteString)
-import qualified Data.ByteString.Lazy as BSL
-import Data.Functor ( (<&>) )
+import Data.ByteString.Lazy qualified as BSL
+import Data.Functor ((<&>))
 import System.FilePath (makeRelative)
 
 data LazyFile = LazyFile
-    { path :: FilePath
-    , relativePath :: FilePath
-    , content :: ByteString }
-    deriving (Show, Eq, Ord)
+  { path :: FilePath,
+    relativePath :: FilePath,
+    content :: ByteString
+  }
+  deriving (Show, Eq, Ord)
 
 readLazy :: FilePath -> FilePath -> IO LazyFile
 readLazy root fp = BSL.readFile fp <&> LazyFile fp (makeRelative root fp)
