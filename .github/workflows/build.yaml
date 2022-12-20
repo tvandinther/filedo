@@ -5,9 +5,7 @@ on:
   workflow_dispatch:
   push:
     tags:
-      - '*.*.*'
-    branches:
-      - add-github-actions
+      - 'v*.*.*'
 
 jobs:
   build:
@@ -20,6 +18,14 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
+        # verifies that the version in the cabal file matches the intended tag
+      - name: verify version matches tag
+        run: |
+          if [[ $GITHUB_REF != refs/tags/v$(grep '^version:' filedo.cabal | awk '{print $2}') ]]; then
+            echo "tag must match version in package.yaml"
+            exit 1
+          fi
+
       - uses: haskell/actions/setup@v2
         with:
           ghc-version: 9.2.4

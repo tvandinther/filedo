@@ -1,0 +1,78 @@
+name: release
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["build"]
+    types: [completed]
+
+jobs:
+  release:
+    if: github.event.workflow_run.conclusion == 'success'
+    name: ${{ github.ref }} release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - uses: actions/download-artifact@v3
+        with:
+          name: ${{ github.sha }}-builds
+
+      - name: unzip artifacts
+        run: unzip ${{ github.sha }}-builds -d bin
+
+      - name: untar linux executable
+        run: tar -xzf bin/filedo-Linux-X64.tar.gz
+
+      - name: version
+        run: echo "version=$(./bin/filedo --version)" >> $GITHUB_OUTPUT
+        id: version
+
+      - name: Get Changelog Entry
+        id: changelog_reader
+        uses: mindsers/changelog-reader-action@v2
+        with:
+          validation_level: error
+          version: ${{ steps.version.outputs.version }}
+          path: ./CHANGELOG.md
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ steps.version.outputs.version }}
+          body: ${{ steps.changelog_reader.outputs.changes }}
+          draft: false
+          prerelease: false
+
+      - name: upload linux artifact
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./bin/filedo-Linux-X64.tar.gz
+          asset_name: filedo-${{ steps.version.outputs.version }}-Linux-X64.tar.gz
+          asset_content_type: application/gzip
+      
+      - name: upload darwin artifact
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./bin/filedo-macOS-X64.tar.gz
+          asset_name: filedo-${{ steps.version.outputs.version }}-macOS-X64.tar.gz
+          asset_content_type: application/gzip
+      
+      - name: upload windows artifact
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./bin/filedo-Windows-X64.zip
+          asset_name: filedo-${{ steps.version.outputs.version }}-Windows-X64.zip
+          asset_content_type: application/zip
