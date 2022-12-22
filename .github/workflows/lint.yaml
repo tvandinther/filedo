@@ -13,8 +13,10 @@ jobs:
 
       - uses: haskell/actions/hlint-setup@v2
       
+      # addresses the issue: https://github.com/haskell/actions/issues/128
+      - run: sudo apt-get install -y libncurses5 
+
       - uses: haskell/actions/hlint-run@v2
         with:
-          version: 3.5 # addresses the issue: https://github.com/haskell/actions/issues/128
           path: '["src/", "app/", "test/"]'
           fail-on: warning
