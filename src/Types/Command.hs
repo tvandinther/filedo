@@ -19,7 +19,7 @@ newtype Command = Command {unCommand :: [String]}
   deriving (Show)
 
 instance FromJSON Command where
-  parseJSON (YAML.String s) = return $ Command [T.unpack s]
+  parseJSON (YAML.String s) = pure . Command . words $ T.unpack s
   parseJSON (YAML.Array xs) = Command <$> Prelude.mapM YAML.parseJSON (toList xs)
   parseJSON _ = fail "Command must be a string or an array of strings"
 

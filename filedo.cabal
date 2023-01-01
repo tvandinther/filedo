@@ -28,6 +28,7 @@ library
       Actions.Compile
       Actions.MergeData
       Actions.Process
+      Shell
       Types
       Types.Command
       Types.FileScoped

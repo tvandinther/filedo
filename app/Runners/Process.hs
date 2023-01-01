@@ -8,12 +8,14 @@ import Actions.Process (ProcessError (..), ProcessJob (..), ProcessSuccess (..),
 import Commands.Process (ProcessOptions (..))
 import Control.Monad qualified
 import Control.Monad.Extra (concatMapM)
+import Data.Map qualified as Map
 import Data.Set qualified as Set
 import Data.Text.Encoding (encodeUtf8)
 import Data.Yaml (prettyPrintParseException)
 import Data.Yaml qualified as YAML
 import Options (GlobalOptions (quiet))
 import Runners.Compile (getData, printWarnings)
+import Shell (runCmds)
 import System.Directory.Extra (listDirectories, listFiles)
 import System.FilePath (addTrailingPathSeparator, (</>))
 import System.Process.Extra (system)
@@ -73,21 +75,7 @@ processRule r d False q = do
   case res of
     Left err -> putStrLn $ getMessage err
     Right cs -> do
-      mapM_ (runCmd q) $ cmds cs
-  where
-    runCmd True cmd = do
-      runCommand cmd
-    runCmd False cmd = do
-      putStrLn $ "Running: " ++ printCmd cmd
-      runCommand cmd
-
-runCommand :: Cmd -> IO ()
-runCommand (Unscoped (Command c)) = do
-  _ <- system $ unwords c
-  pure ()
-runCommand (Scoped (FileScoped p (Command c))) = do
-  _ <- system $ "export filepath=" ++ p ++ "; " ++ unwords c
-  pure ()
+      runCmds (unDirectory d) (Map.empty) $ cmds cs
 
 listAllRecursive :: FilePath -> IO [FilePath]
 listAllRecursive path = do
