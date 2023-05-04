@@ -23,7 +23,7 @@ import Types (Directory (..))
 import Types.Command (Cmd (..), Command (..), prettyPrintCmd, printCmd)
 import Types.FileScoped (FileScoped (..))
 import Types.LazyFile (readLazy)
-import Types.Rule (Rule)
+import Types.Rule (Rule (environment))
 
 runProcess :: GlobalOptions -> ProcessOptions -> IO ()
 runProcess globalOpts (ProcessOptions d rf _ [] _ dry) = do
@@ -75,7 +75,7 @@ processRule r d False q = do
   case res of
     Left err -> putStrLn $ getMessage err
     Right cs -> do
-      runCmds (unDirectory d) (Map.empty) $ cmds cs
+      runCmds (unDirectory d) (environment r) $ cmds cs
 
 listAllRecursive :: FilePath -> IO [FilePath]
 listAllRecursive path = do

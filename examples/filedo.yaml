@@ -9,8 +9,8 @@ rules: # rule name
     pre: ["echo", "Listing all non-cfn directories", "AWS_PROFILE=$AWS_PROFILE", "AWS_REGION=$AWS_REGION"] # a command to run before the rule
     parallelise: true # run the commands in parallel, default false
     ignoreErrors: true # ignore command errors, default false
-    command: ["echo", "$filepath"] # a command to run for each target, variables are auto-populated: $path is the path of the target, $name is the name of the target without extensions
-    post: "echo 'done'" # a command to run after the rule
+    command: ["echo", "$FILEPATH"] # a command to run for each target, variables are auto-populated: $filepath is the path of the target, $filename is the name of the target without extensions
+    post: "echo done" # a command to run after the rule
     environment: # override environment variables for the execution of the rule
       AWS_PROFILE: "{{global.awsProfile}}"
   
@@ -40,4 +40,4 @@ rules: # rule name
 # set environment variables globally
 environment:
   AWS_PROFILE: default
-  AWS_REGION: ap-southeasth-2
+  AWS_REGION: ap-southeast-2

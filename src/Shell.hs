@@ -7,11 +7,12 @@ where
 import Control.Monad qualified
 import Data.Map (Map, assocs)
 import Data.Set qualified as Set
+import Debug.Trace qualified as Debug
 import GHC.IO.Handle (Handle)
 import System.Exit (ExitCode (..))
-import System.FilePath ((</>))
+import System.FilePath (dropTrailingPathSeparator, takeBaseName, takeDirectory, takeExtension, takeFileName, (</>))
 import System.Process.Extra
-  ( CmdSpec (RawCommand),
+  ( CmdSpec (RawCommand, ShellCommand),
     CreateProcess (..),
     ProcessHandle,
     StdStream (Inherit),
@@ -67,14 +68,23 @@ toProcess wd env (Unscoped (Command c)) =
   defaultProcess
     { cmdspec = RawCommand (head c) (tail c),
       cwd = Just wd,
-      env = Just (assocs env)
+      env = Just $ Debug.traceShow (assocs env) (assocs env)
     }
-toProcess wd env (Scoped (FileScoped _ (Command c))) =
+toProcess wd env (Scoped (FileScoped p (Command c))) =
   defaultProcess
-    { cmdspec = RawCommand (head c) (tail c),
+    { cmdspec = ShellCommand $ unwords c,
       cwd = Just wd,
-      env = Just (assocs env)
+      env = Just $ Debug.traceShow (assocs env ++ createFileVariables p) $ assocs env ++ createFileVariables p
     }
+
+createFileVariables :: FilePath -> [(String, String)]
+createFileVariables p =
+  let path = dropTrailingPathSeparator p
+   in [ ("FILEPATH", path),
+        ("FILENAME", takeBaseName path),
+        ("FILEEXT", takeExtension path),
+        ("FILEDIR", takeDirectory $ dropTrailingPathSeparator path)
+      ]
 
 defaultProcess :: CreateProcess
 defaultProcess =
