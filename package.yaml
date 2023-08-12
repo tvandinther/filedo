@@ -74,5 +74,6 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - filedo
+    - HUnit
     default-extensions:
     - ImportQualifiedPost

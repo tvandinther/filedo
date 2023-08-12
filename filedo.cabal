@@ -1,6 +1,6 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.35.0.
+-- This file has been generated from package.yaml by hpack version 0.35.1.
 --
 -- see: https://github.com/sol/hpack
 
@@ -98,6 +98,7 @@ test-suite filedo-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      Process
       Paths_filedo
   hs-source-dirs:
       test
@@ -106,6 +107,7 @@ test-suite filedo-test
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       Glob
+    , HUnit
     , aeson
     , base >=4.7 && <5
     , bytestring
