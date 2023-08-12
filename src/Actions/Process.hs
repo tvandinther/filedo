@@ -11,9 +11,9 @@ import Data.List.Extra (sortOn)
 import Data.Ord (Down (..))
 import System.FilePath ((</>))
 import System.FilePath.Glob (compile, decompile, match, simplify)
-import Types.Command (Cmd (..))
+import Types.Command (Command, QualifiedCommand (..))
 import Types.FileScoped (FileScoped (..))
-import Types.Rule (Command (..), GlobPattern, Rule (..))
+import Types.Rule (GlobPattern, Rule (..))
 
 data ProcessJob = ProcessJob
   { targetDirectory :: String,
@@ -22,7 +22,7 @@ data ProcessJob = ProcessJob
   }
 
 newtype ProcessSuccess = ProcessSuccess
-  {cmds :: [Cmd]}
+  {cmds :: [QualifiedCommand]}
   deriving (Show)
 
 newtype ProcessError = ProcessError {getMessage :: String} deriving (Show)
@@ -30,10 +30,10 @@ newtype ProcessError = ProcessError {getMessage :: String} deriving (Show)
 process :: ProcessJob -> Either ProcessError ProcessSuccess
 process job = Right $ ProcessSuccess $ processRule (files job) (rule job)
 
-processRule :: [FilePath] -> Rule -> [Cmd]
+processRule :: [FilePath] -> Rule -> [QualifiedCommand]
 processRule fps r = processRule' fps (targets r) r
 
-processRule' :: [FilePath] -> [GlobPattern] -> Rule -> [Cmd]
+processRule' :: [FilePath] -> [GlobPattern] -> Rule -> [QualifiedCommand]
 processRule' _ _ (Rule {skip = True}) = []
 processRule' fs rootPatterns r =
   allCommands
@@ -46,17 +46,17 @@ processRule' fs rootPatterns r =
     allCommands = addPreHook r $ addPostHook r $ Scoped <$> expandedCommands
     expandedCommands = expandCommand rootPatterns fs r
 
-addPreHook :: Rule -> [Cmd] -> [Cmd]
-addPreHook (Rule {pre = Command []}) = id
-addPreHook (Rule {pre = hook}) = (:) $ Unscoped hook
+addPreHook :: Rule -> [QualifiedCommand] -> [QualifiedCommand]
+addPreHook (Rule {pre = Nothing}) = id
+addPreHook (Rule {pre = Just hook}) = (:) $ Unscoped hook
 
-addPostHook :: Rule -> [Cmd] -> [Cmd]
-addPostHook (Rule {post = Command []}) = id
-addPostHook (Rule {post = hook}) = flip (++) [Unscoped hook]
+addPostHook :: Rule -> [QualifiedCommand] -> [QualifiedCommand]
+addPostHook (Rule {post = Nothing}) = id
+addPostHook (Rule {post = Just hook}) = flip (++) [Unscoped hook]
 
 expandCommand :: [GlobPattern] -> [FilePath] -> Rule -> [FileScoped Command]
-expandCommand _ _ (Rule {command = Command []}) = []
-expandCommand rootPatterns fs (Rule {command = cmd, targets = tInclude, exclude = tExclude}) =
+expandCommand _ _ (Rule {command = Nothing}) = []
+expandCommand rootPatterns fs (Rule {command = Just cmd, targets = tInclude, exclude = tExclude}) =
   flip FileScoped cmd <$> filteredFiles
   where
     filteredFiles = filter (\fp -> isIncludedFile fp && not (isExcludedFile fp)) fs

@@ -20,12 +20,11 @@ import System.Process.Extra
     waitForProcess,
   )
 import Types (FileScoped (..))
-import Types.Command (Cmd (..))
-import Types.Rule (Command (..))
+import Types.Command (QualifiedCommand (..))
 
 type Environment = Map String String
 
-runCmds :: FilePath -> Environment -> [Cmd] -> IO ()
+runCmds :: FilePath -> Environment -> [QualifiedCommand] -> IO ()
 runCmds _ _ [] = pure ()
 runCmds wd env (c : cs) = do
   exitCode <- runCmd wd env c
@@ -50,29 +49,29 @@ isSuccess = (==) ExitSuccess
 --           (x, _i) <- waitAny (Set.toList xs)
 --           loop (Set.delete x xs)
 
-runCmd :: FilePath -> Environment -> Cmd -> IO ExitCode
+runCmd :: FilePath -> Environment -> QualifiedCommand -> IO ExitCode
 runCmd wd env cmd = do
   (_, _, _, p) <-
     createProcess $ toProcess wd env cmd
   -- runCmdAsync wd env cmd
   waitForProcess p
 
-runCmdAsync :: FilePath -> Environment -> Cmd -> IO (Handle, Handle, Handle, ProcessHandle)
+runCmdAsync :: FilePath -> Environment -> QualifiedCommand -> IO (Handle, Handle, Handle, ProcessHandle)
 runCmdAsync wd env cmd = do
   (Just stdIn, Just stdOut, Just stdErr, p) <-
     createProcess $ toProcess wd env cmd
   pure (stdIn, stdOut, stdErr, p)
 
-toProcess :: FilePath -> Environment -> Cmd -> CreateProcess
-toProcess wd env (Unscoped (Command c)) =
+toProcess :: FilePath -> Environment -> QualifiedCommand -> CreateProcess
+toProcess wd env (Unscoped c) =
   defaultProcess
-    { cmdspec = RawCommand (head c) (tail c),
+    { cmdspec = c,
       cwd = Just wd,
       env = Just $ Debug.traceShow (assocs env) (assocs env)
     }
-toProcess wd env (Scoped (FileScoped p (Command c))) =
+toProcess wd env (Scoped (FileScoped p c)) =
   defaultProcess
-    { cmdspec = ShellCommand $ unwords c,
+    { cmdspec = c,
       cwd = Just wd,
       env = Just $ Debug.traceShow (assocs env ++ createFileVariables p) $ assocs env ++ createFileVariables p
     }

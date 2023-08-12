@@ -2,8 +2,8 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 module Types.Command
-  ( Cmd (..),
-    -- Command (..),
+  ( QualifiedCommand (..),
+    Command,
     printCmd,
     prettyPrintCmd,
     -- prettyPrintCommand,
@@ -17,10 +17,9 @@ import Data.Yaml qualified as YAML
 import System.Process.Extra (CmdSpec (RawCommand, ShellCommand))
 import Types.FileScoped (FileScoped (..))
 
-data Cmd = Unscoped CmdSpec | Scoped (FileScoped CmdSpec) deriving (Show)
+type Command = CmdSpec
 
--- newtype Command = Command {unCommand :: [String]}
---   deriving (Show)
+data QualifiedCommand = Unscoped Command | Scoped (FileScoped Command) deriving (Show)
 
 instance FromJSON CmdSpec where
   parseJSON (YAML.Array xs) =
@@ -30,13 +29,10 @@ instance FromJSON CmdSpec where
   parseJSON (YAML.String s) = pure . ShellCommand $ T.unpack s
   parseJSON _ = fail "Command must be a string or an array of strings"
 
-printCmd :: Cmd -> String
+printCmd :: QualifiedCommand -> String
 printCmd (Unscoped c) = show c
 printCmd (Scoped (FileScoped _ c)) = show c
 
-prettyPrintCmd :: Cmd -> String
+prettyPrintCmd :: QualifiedCommand -> String
 prettyPrintCmd (Unscoped c) = show c
 prettyPrintCmd (Scoped (FileScoped s c)) = s ++ ": " ++ show c
-
--- prettyPrintCommand :: CmdSpec -> String
--- prettyPrintCommand (Command cs) = unwords cs

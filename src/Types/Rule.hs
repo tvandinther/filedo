@@ -3,7 +3,6 @@
 
 module Types.Rule
   ( Rule (..),
-    Command (..),
     GlobPattern,
   )
 where
@@ -14,15 +13,14 @@ import Data.Text qualified as T
 import Data.Yaml (FromJSON)
 import Data.Yaml qualified as YAML
 import System.FilePath.Glob (Pattern, compile)
-import System.Process.Extra (CmdSpec (ShellCommand))
+import System.Process.Extra (CmdSpec)
+import Types.Command ()
 
 type GlobPattern = Pattern
 
 instance FromJSON Pattern where
   parseJSON (YAML.String s) = return $ compile (T.unpack s)
   parseJSON _ = fail "Glob pattern must be a string"
-
-type Command = CmdSpec
 
 data Rule = Rule
   { priority :: Integer,
@@ -32,9 +30,9 @@ data Rule = Rule
     useStdIn :: Bool,
     parallelise :: Bool,
     ignoreErrors :: Bool,
-    pre :: CmdSpec,
-    command :: CmdSpec,
-    post :: CmdSpec,
+    pre :: Maybe CmdSpec,
+    command :: Maybe CmdSpec,
+    post :: Maybe CmdSpec,
     environment :: Map String String,
     rules :: [Rule]
   }
@@ -50,9 +48,9 @@ instance FromJSON Rule where
       <*> o .:? "useStdIn" .!= False
       <*> o .:? "parallelise" .!= False
       <*> o .:? "ignoreErrors" .!= False
-      <*> o .:? "pre" .!= ShellCommand ""
-      <*> o .:? "command" .!= ShellCommand ""
-      <*> o .:? "post" .!= ShellCommand ""
+      <*> o .:? "pre" .!= Nothing
+      <*> o .:? "command" .!= Nothing
+      <*> o .:? "post" .!= Nothing
       <*> o .:? "environment" .!= mempty
       <*> o .:? "rules" .!= []
   parseJSON _ = fail "Expected Object for Rule"
