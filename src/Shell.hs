@@ -6,13 +6,12 @@ where
 
 import Control.Monad qualified
 import Data.Map (Map, assocs)
-import Data.Set qualified as Set
 import Debug.Trace qualified as Debug
 import GHC.IO.Handle (Handle)
 import System.Exit (ExitCode (..))
-import System.FilePath (dropTrailingPathSeparator, takeBaseName, takeDirectory, takeExtension, takeFileName, (</>))
+import System.FilePath (dropTrailingPathSeparator, takeBaseName, takeDirectory, takeExtension)
 import System.Process.Extra
-  ( CmdSpec (RawCommand, ShellCommand),
+  ( CmdSpec (RawCommand),
     CreateProcess (..),
     ProcessHandle,
     StdStream (Inherit),
@@ -30,30 +29,22 @@ runCmds wd env (c : cs) = do
   exitCode <- runCmd wd env c
   Control.Monad.when (isSuccess exitCode) $ runCmds wd env cs
 
--- runCmdsAsync :: FilePath -> Environment -> [Cmd] -> IO ()
--- runCmdsAsync _ _ [] = pure ()
--- runCmdsAsync wd env cs = do
---   xs <- mapM (runCmdAsync wd env) cs
+-- TODO: Allow failure to be ignored. Change occurs at this function
 
---   pure ()
+runCmdsAsync :: FilePath -> Environment -> [QualifiedCommand] -> IO ()
+runCmdsAsync _ _ [] = pure ()
+runCmdsAsync wd env cs = do
+  xs <- mapM (runCmdAsync wd env) cs
+  exitCodes <- mapM (waitForProcess . (\(_, _, _, p) -> p)) xs
+  pure ()
 
 isSuccess :: ExitCode -> Bool
 isSuccess = (==) ExitSuccess
-
--- waitForAllProcesses :: [ProcessHandle] -> [ExitCode]
--- waitForAllProcesses ps = loop $ Set.fromList ps
---   where
---     loop xs
---       | null xs = pure ()
---       | otherwise = do
---           (x, _i) <- waitAny (Set.toList xs)
---           loop (Set.delete x xs)
 
 runCmd :: FilePath -> Environment -> QualifiedCommand -> IO ExitCode
 runCmd wd env cmd = do
   (_, _, _, p) <-
     createProcess $ toProcess wd env cmd
-  -- runCmdAsync wd env cmd
   waitForProcess p
 
 runCmdAsync :: FilePath -> Environment -> QualifiedCommand -> IO (Handle, Handle, Handle, ProcessHandle)
