@@ -3,10 +3,15 @@
 DIR="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )" 
 cd $DIR/$1
 
-args=$(cat args)
+# args=$(cat args)
+# for each line in args file, run filedo with the line as argument
 
-if [ -x "$(command -v stack)" ]; then
-  stack run -- $args
-else
-  filedo $args
-fi
+while read -r argline; do
+  echo "Running: $argline"
+  if [ -x "$(command -v stack)" ]; then
+    stack run -- $argline
+  else
+    filedo $argline
+  fi
+done < args
+
