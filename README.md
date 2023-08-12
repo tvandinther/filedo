@@ -99,3 +99,15 @@ The top level object of the file is a `Rule`, with scoped subrules specified rec
 | `post` | `[]` | A command to run after the rule is applied. Subrules will not execute if this hook returns a non-zero exit code. |
 | `environment` | `{}` | A map of environment variables to set for the command. |
 | `rules` | `[]` | A list of subrules. A rule is executed before its subrules. Rules are executed depth-first. |
+
+---
+## Setting up a local development environment
+
+It is recommended to use [ghcup](https://www.haskell.org/ghcup/) to manage your Haskell environment. Once installed, use the following versions to ensure compatibility with the project:
+
+| Tool | Version |
+| --- | --- |
+| GHC | 9.2.4 |
+| HLS | 1.8.0 |
+| Stack | 2.9.3 |
+| Cabal | 3.6.2 |
