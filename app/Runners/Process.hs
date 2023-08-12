@@ -20,7 +20,7 @@ import System.Directory.Extra (listDirectories, listFiles)
 import System.FilePath (addTrailingPathSeparator, (</>))
 import System.Process.Extra (system)
 import Types (Directory (..))
-import Types.Command (Command (..), prettyPrintCmd, printCmd)
+import Types.Command (Command (..), prettyPrintQualifiedCommand, printQualifiedCommand)
 import Types.FileScoped (FileScoped (..))
 import Types.LazyFile (readLazy)
 import Types.Rule (Rule (environment))
@@ -66,7 +66,7 @@ processRule r d True _ = do
   let res = process $ ProcessJob "" r allTargets
   case res of
     Left err -> putStrLn $ getMessage err
-    Right cs -> putStrLn $ unlines $ numberedLines $ prettyPrintCmd <$> cmds cs
+    Right cs -> putStrLn $ unlines $ numberedLines $ prettyPrintQualifiedCommand <$> cmds cs
   where
     numberedLines = Prelude.zipWith (\n s -> show n ++ "| " ++ s) [(1 :: Int) ..]
 processRule r d False q = do

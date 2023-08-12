@@ -4,9 +4,8 @@
 module Types.Command
   ( QualifiedCommand (..),
     Command,
-    printCmd,
-    prettyPrintCmd,
-    -- prettyPrintCommand,
+    printQualifiedCommand,
+    prettyPrintQualifiedCommand,
   )
 where
 
@@ -29,10 +28,10 @@ instance FromJSON CmdSpec where
   parseJSON (YAML.String s) = pure . ShellCommand $ T.unpack s
   parseJSON _ = fail "Command must be a string or an array of strings"
 
-printCmd :: QualifiedCommand -> String
-printCmd (Unscoped c) = show c
-printCmd (Scoped (FileScoped _ c)) = show c
+printQualifiedCommand :: QualifiedCommand -> String
+printQualifiedCommand (Unscoped c) = show c
+printQualifiedCommand (Scoped (FileScoped _ c)) = show c
 
-prettyPrintCmd :: QualifiedCommand -> String
-prettyPrintCmd (Unscoped c) = show c
-prettyPrintCmd (Scoped (FileScoped s c)) = s ++ ": " ++ show c
+prettyPrintQualifiedCommand :: QualifiedCommand -> String
+prettyPrintQualifiedCommand (Unscoped c) = show c
+prettyPrintQualifiedCommand (Scoped (FileScoped s c)) = s ++ ": " ++ show c
