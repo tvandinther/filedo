@@ -104,10 +104,13 @@ The top level object of the file is a `Rule`, with scoped subrules specified rec
 The following environment variables are available to commands:
 | Variable | Description | Example |
 | --- | --- | --- |
-| `FILEPATH` | The full path of the target file. | `/home/user/project/src/file.txt` |
+| `FILEPATH` | The relative path of the target file. | `project/src/file.txt` |
+| `ABSFILEPATH` | The absolute path of the target file. (Not yet available) | `/home/user/project/src/file.txt` |
 | `FILENAME` | The name of the target file. | `file.txt` |
 | `FILEEXT` | The extension of the target file. | `txt` |
-| `FILEDIR` | The directory of the target file. | `/home/user/project/src` |
+| `FILEDIR` | The relative directory of the target file. | `project/src` |
+| `ABSFILEDIR` | The absolute directory of the target file. (Not yet available) | `/home/user/project/src` |
+* Given a `TARGET_DIRECTORY` of `/home/user`.
 
 ---
 ## Setting up a local development environment

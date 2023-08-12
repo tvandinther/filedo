@@ -1,5 +1,6 @@
-TODO: Use Writer monad for logging
+TODO: Use RIO monad for logging and configuration
 TODO: Add support for environment variables
 TODO: Add support for parallelisation
 TODO: Add support for stdin
 TODO: Add support for ignoreErrors
+TODO: Add file variables for absolute paths (to file and containing directory)
