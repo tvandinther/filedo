@@ -9,14 +9,16 @@ where
 
 import Data.List.Extra (sortOn)
 import Data.Ord (Down (..))
+import Debug.Trace qualified as Debug
 import System.FilePath ((</>))
 import System.FilePath.Glob (compile, decompile, match, simplify)
+import Types (Directory (unDirectory))
 import Types.Command (Command, QualifiedCommand (..))
 import Types.FileScoped (FileScoped (..))
 import Types.Rule (GlobPattern, Rule (..))
 
 data ProcessJob = ProcessJob
-  { targetDirectory :: String,
+  { targetDirectory :: Directory,
     rule :: Rule,
     files :: [FilePath]
   }
@@ -28,10 +30,7 @@ newtype ProcessSuccess = ProcessSuccess
 newtype ProcessError = ProcessError {getMessage :: String} deriving (Show)
 
 process :: ProcessJob -> Either ProcessError ProcessSuccess
-process job = Right $ ProcessSuccess $ processRule (files job) (rule job)
-
-processRule :: [FilePath] -> Rule -> [QualifiedCommand]
-processRule fps r = processRule' fps (targets r) r
+process job = Right $ ProcessSuccess $ processRule' (files job) [compile . unDirectory $ targetDirectory job] (rule job)
 
 processRule' :: [FilePath] -> [GlobPattern] -> Rule -> [QualifiedCommand]
 processRule' _ _ (Rule {skip = True}) = []

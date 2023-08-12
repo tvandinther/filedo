@@ -63,7 +63,7 @@ type Quiet = Bool
 processRule :: Rule -> Directory -> DryRun -> Quiet -> IO ()
 processRule r d True _ = do
   allTargets <- listAllRecursive $ unDirectory d
-  let res = process $ ProcessJob "" r allTargets
+  let res = process $ ProcessJob d r allTargets
   case res of
     Left err -> putStrLn $ getMessage err
     Right cs -> putStrLn $ unlines $ numberedLines $ prettyPrintQualifiedCommand <$> cmds cs
@@ -71,7 +71,7 @@ processRule r d True _ = do
     numberedLines = Prelude.zipWith (\n s -> show n ++ "| " ++ s) [(1 :: Int) ..]
 processRule r d False q = do
   allTargets <- listAllRecursive $ unDirectory d
-  let res = process $ ProcessJob "" r allTargets
+  let res = process $ ProcessJob d r allTargets
   case res of
     Left err -> putStrLn $ getMessage err
     Right cs -> do

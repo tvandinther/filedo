@@ -6,7 +6,6 @@ where
 
 import Control.Monad qualified
 import Data.Map (Map, assocs)
-import Debug.Trace qualified as Debug
 import GHC.IO.Handle (Handle)
 import System.Exit (ExitCode (..))
 import System.FilePath (dropTrailingPathSeparator, takeBaseName, takeDirectory, takeExtension)
@@ -58,13 +57,13 @@ toProcess wd env (Unscoped c) =
   defaultProcess
     { cmdspec = c,
       cwd = Just wd,
-      env = Just $ Debug.traceShow (assocs env) (assocs env)
+      env = Just (assocs env)
     }
 toProcess wd env (Scoped (FileScoped p c)) =
   defaultProcess
     { cmdspec = c,
       cwd = Just wd,
-      env = Just $ Debug.traceShow (assocs env ++ createFileVariables p) $ assocs env ++ createFileVariables p
+      env = Just $ assocs env ++ createFileVariables p
     }
 
 createFileVariables :: FilePath -> [(String, String)]
