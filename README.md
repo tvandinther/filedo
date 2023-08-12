@@ -100,6 +100,15 @@ The top level object of the file is a `Rule`, with scoped subrules specified rec
 | `environment` | `{}` | A map of environment variables to set for the command. |
 | `rules` | `[]` | A list of subrules. A rule is executed before its subrules. Rules are executed depth-first. |
 
+### Environment variables available to commands
+The following environment variables are available to commands:
+| Variable | Description | Example |
+| --- | --- | --- |
+| `FILEPATH` | The full path of the target file. | `/home/user/project/src/file.txt` |
+| `FILENAME` | The name of the target file. | `file.txt` |
+| `FILEEXT` | The extension of the target file. | `txt` |
+| `FILEDIR` | The directory of the target file. | `/home/user/project/src` |
+
 ---
 ## Setting up a local development environment
 

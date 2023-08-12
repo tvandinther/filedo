@@ -72,7 +72,7 @@ createFileVariables p =
   let path = dropTrailingPathSeparator p
    in [ ("FILEPATH", path),
         ("FILENAME", takeBaseName path),
-        ("FILEEXT", takeExtension path),
+        ("FILEEXT", tail $ takeExtension path),
         ("FILEDIR", takeDirectory $ dropTrailingPathSeparator path)
       ]
 
