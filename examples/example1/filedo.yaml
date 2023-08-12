@@ -1,0 +1,12 @@
+targets:
+  - "*"
+pre: "echo 'Listing files matching pattern'"
+command: "echo $FILEPATH"
+post: "echo Echoing environment variable FOO: $FOO"
+environment:
+  FOO: "hello"
+rules:
+  - targets:
+    - "*.txt"
+    pre: "echo ------------------"
+    command: "echo $FILEPATH"
