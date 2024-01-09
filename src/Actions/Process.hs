@@ -9,7 +9,6 @@ where
 
 import Data.List.Extra (sortOn)
 import Data.Ord (Down (..))
-import Debug.Trace qualified as Debug
 import System.FilePath ((</>))
 import System.FilePath.Glob (compile, decompile, match, simplify)
 import Types (Directory (unDirectory))
