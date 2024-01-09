@@ -33,5 +33,9 @@ printQualifiedCommand (Unscoped c) = show c
 printQualifiedCommand (Scoped (FileScoped _ c)) = show c
 
 prettyPrintQualifiedCommand :: QualifiedCommand -> String
-prettyPrintQualifiedCommand (Unscoped c) = show c
-prettyPrintQualifiedCommand (Scoped (FileScoped s c)) = s ++ ": " ++ show c
+prettyPrintQualifiedCommand (Unscoped c) = uncommand c
+prettyPrintQualifiedCommand (Scoped (FileScoped s c)) = s ++ ": " ++ uncommand c
+
+uncommand :: Command -> String
+uncommand (RawCommand s _) = s
+uncommand (ShellCommand s) = s
