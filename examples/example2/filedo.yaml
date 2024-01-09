@@ -6,36 +6,57 @@ rules: # rule name
       - "**/"
     exclude: # exclude directories, i.e. exclude cfn directories
       - "**/cfn/"
-    pre: ["echo", "Listing all non-cfn directories", "AWS_PROFILE=$AWS_PROFILE", "AWS_REGION=$AWS_REGION"] # a command to run before the rule
+    pre:
+      - echo
+      - "Listing all non-cfn directories AWS_PROFILE=$AWS_PROFILE AWS_REGION=$AWS_REGION" # a command to run before the rule
     parallelise: true # run the commands in parallel, default false
     ignoreErrors: true # ignore command errors, default false
-    command: ["echo", "$FILEPATH"] # a command to run for each target, variables are auto-populated: $filepath is the path of the target, $filename is the name of the target without extensions
+    command: ["echo", "$filepath"] # a command to run for each target, variables are auto-populated: $filepath is the path of the target, $filename is the name of the target without extensions
     post: "echo done" # a command to run after the rule
     environment: # override environment variables for the execution of the rule
       AWS_PROFILE: "{{global.awsProfile}}"
-  
-    rules:
-      - priority: 9999
-        skip: true
-        targets: 
-        - "**/cfn/*.yaml" # targets all yaml files in cfn directories
-        pre: ["echo", "AWS_PROFILE=$AWS_PROFILE", "AWS_REGION=$AWS_REGION"]
-        command: ["echo", "aws", "cloudformation", "deploy", "--template-file", "$path", "--stack-name", "$name", "--capabilities", "CAPABILITY_IAM"]
-      
-      - targets: # targetes all yaml files
-          - "**/*.yaml"
-        skip: true
-        exclude: # exclude all yaml files in cfn directories
-          - "**/cfn/*.yaml"
-          - "**/data/*.yaml"
-        useStdIn: true # pipes the file contents into the command via stdin
-        command:
-          - echo
-          - kubectl
-          - apply
-          - -f
-          - "-"
-        pre: ["echo", "aws", "eks", "update-kubeconfig", "--name", "{{global.clusterName}}"]
+
+  - priority: 9999
+    skip: false
+    targets:
+      - "**/cfn/*.yaml" # targets all yaml files in cfn directories
+    pre: ["echo", "AWS_PROFILE=$AWS_PROFILE", "AWS_REGION=$AWS_REGION"]
+    command:
+      [
+        "echo",
+        "aws",
+        "cloudformation",
+        "deploy",
+        "--template-file",
+        "$filepath",
+        "--stack-name",
+        "{{global.clusterName}}-$filename",
+        "--capabilities",
+        "CAPABILITY_IAM",
+      ]
+
+  - targets: # targets all yaml files
+      - "**/*.yaml"
+    skip: true
+    exclude: # exclude all yaml files in cfn directories
+      - "**/cfn/*.yaml"
+      - "**/data/*.yaml"
+    useStdIn: true # pipes the file contents into the command via stdin
+    command:
+      - echo
+      - kubectl
+      - apply
+      - -f
+      - "-"
+    pre:
+      [
+        "echo",
+        "aws",
+        "eks",
+        "update-kubeconfig",
+        "--name",
+        "{{global.clusterName}}",
+      ]
 
 # set environment variables globally
 environment:

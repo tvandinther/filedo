@@ -42,8 +42,7 @@ isSuccess = (==) ExitSuccess
 
 runCmd :: FilePath -> Environment -> QualifiedCommand -> IO ExitCode
 runCmd wd env cmd = do
-  (_, _, _, p) <-
-    createProcess $ toProcess wd env cmd
+  (_, _, _, p) <- createProcess $ toProcess wd env cmd
   waitForProcess p
 
 runCmdAsync :: FilePath -> Environment -> QualifiedCommand -> IO (Handle, Handle, Handle, ProcessHandle)
@@ -69,11 +68,15 @@ toProcess wd env (Scoped (FileScoped p c)) =
 createFileVariables :: FilePath -> [(String, String)]
 createFileVariables p =
   let path = dropTrailingPathSeparator p
-   in [ ("FILEPATH", path),
-        ("FILENAME", takeBaseName path),
-        ("FILEEXT", tail $ takeExtension path),
-        ("FILEDIR", takeDirectory $ dropTrailingPathSeparator path)
+   in [ ("filepath", path),
+        ("filename", takeBaseName path),
+        ("fileext", takeCleanExtension path),
+        ("filedir", takeDirectory $ dropTrailingPathSeparator path)
       ]
+  where
+    takeCleanExtension = removeLeadingDotIfExists . takeExtension
+    removeLeadingDotIfExists ('.' : xs) = xs
+    removeLeadingDotIfExists xs = xs
 
 defaultProcess :: CreateProcess
 defaultProcess =

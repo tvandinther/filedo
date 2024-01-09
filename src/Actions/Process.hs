@@ -55,12 +55,13 @@ addPostHook (Rule {post = Just hook}) = flip (++) [Unscoped hook]
 
 expandCommand :: [GlobPattern] -> [FilePath] -> Rule -> [FileScoped Command]
 expandCommand _ _ (Rule {command = Nothing}) = []
-expandCommand rootPatterns fs (Rule {command = Just cmd, targets = tInclude, exclude = tExclude}) =
+expandCommand rootPatterns fs (Rule {command = Just cmd, targets = toInclude, exclude = toExclude}) =
   flip FileScoped cmd <$> filteredFiles
   where
     filteredFiles = filter (\fp -> isIncludedFile fp && not (isExcludedFile fp)) fs
-    isIncludedFile fp = any (`match` fp) (cartesianConcatGlobs rootPatterns tInclude)
-    isExcludedFile fp = any (`match` fp) (cartesianConcatGlobs rootPatterns tExclude)
+    isIncludedFile fp = any (`match` fp) . patterns $ toInclude
+    isExcludedFile fp = any (`match` fp) . patterns $ toExclude
+    patterns = cartesianConcatGlobs rootPatterns
 
 cartesianConcatGlobs :: [GlobPattern] -> [GlobPattern] -> [GlobPattern]
 cartesianConcatGlobs [] _ = []

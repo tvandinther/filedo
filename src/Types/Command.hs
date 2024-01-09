@@ -23,7 +23,7 @@ data QualifiedCommand = Unscoped Command | Scoped (FileScoped Command) deriving 
 instance FromJSON CmdSpec where
   parseJSON (YAML.Array xs) =
     case mapM (\case YAML.String str -> Just (T.unpack str); _ -> Nothing) (toList xs) of
-      Just strs -> pure $ RawCommand (head strs) (tail strs)
+      Just strs -> pure $ ShellCommand $ unwords strs
       Nothing -> fail "Non-string value found in command array"
   parseJSON (YAML.String s) = pure . ShellCommand $ T.unpack s
   parseJSON _ = fail "Command must be a string or an array of strings"
