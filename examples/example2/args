@@ -1,0 +1,1 @@
+process templates -d data/base.yaml -d data/prod.yaml -c
