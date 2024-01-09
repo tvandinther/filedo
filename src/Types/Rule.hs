@@ -43,7 +43,7 @@ instance FromJSON Rule where
     Rule
       <$> o .:? "priority" .!= 0
       <*> o .:? "skip" .!= False
-      <*> o .:? "targets" .!= ["*"]
+      <*> o .:? "targets" .!= [""]
       <*> o .:? "exclude" .!= []
       <*> o .:? "useStdIn" .!= False
       <*> o .:? "parallelise" .!= False

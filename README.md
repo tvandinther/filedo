@@ -89,7 +89,7 @@ The top level object of the file is a `Rule`, with scoped subrules specified rec
 | --- | --- | --- |
 | `priority` | `0` | The priority of the rule. Rules with higher priority are executed first. |
 | `skip` | `false` | When true, this rule and its subrules will be skipped. |
-| `targets` | `["*"]` | A list of glob patterns to match for target files. Patterns are scoped to the current target. |
+| `targets` | `[""]` | A list of glob patterns to match for target files. Patterns are scoped to the current target. |
 | `exclude` | `[]` | A list of glob patterns to exclude from matches against the target file. Patterns are scoped to the current target. |
 | `useStdIn` | `false` | Whether to pipe file contents via `stdin` as the input for the command. |
 | `parallelise` | `false` | Whether to run the commands in this rule sequentially or in parallel. |
@@ -104,12 +104,12 @@ The top level object of the file is a `Rule`, with scoped subrules specified rec
 The following environment variables are available to commands:
 | Variable | Description | Example |
 | --- | --- | --- |
-| `FILEPATH` | The relative path of the target file. | `project/src/file.txt` |
-| `ABSFILEPATH` | The absolute path of the target file. (Not yet available) | `/home/user/project/src/file.txt` |
-| `FILENAME` | The name of the target file. | `file.txt` |
-| `FILEEXT` | The extension of the target file. | `txt` |
-| `FILEDIR` | The relative directory of the target file. | `project/src` |
-| `ABSFILEDIR` | The absolute directory of the target file. (Not yet available) | `/home/user/project/src` |
+| `filepath` | The relative path of the target file. | `project/src/file.txt` |
+| ~~`absfilepath`~~ | The absolute path of the target file. (Not yet available) | `/home/user/project/src/file.txt` |
+| `filename` | The name of the target file. | `file.txt` |
+| `fileext` | The extension of the target file. | `txt` |
+| `filedir` | The relative directory of the target file. | `project/src` |
+| ~~`absfiledir`~~ | The absolute directory of the target file. (Not yet available) | `/home/user/project/src` |
 * Given a `TARGET_DIRECTORY` of `/home/user`.
 
 ---
